@@ -8,8 +8,8 @@
    </class>
    <class name="std::pair<int, SiPixelModuleStatus>"/>
    <class name="std::map<int, SiPixelModuleStatus>"/>
-   <class name="SiPixelDetectorStatus" ClassVersion="3">
-    <version ClassVersion="3" checksum="3056464560"/>
+   <class name="SiPixelDetectorStatus" ClassVersion="4">
+    <version ClassVersion="4" checksum="365354857"/>
    </class>
    <class name="edm::Wrapper<SiPixelDetectorStatus>"/>
 </lcgdict>

@@ -1,6 +1,7 @@
 #ifndef SIPIXELDETECTORSTATUS_h
 #define SIPIXELDETECTORSTATUS_h
 
+#include <ctime>
 #include <map>
 #include <string>
 
@@ -14,65 +15,61 @@ public:
   SiPixelDetectorStatus();
   ~SiPixelDetectorStatus();
 
-  /// file I/O
+  // file I/O
   void readFromFile(std::string filename);
   void dumpToFile(std::string filename);
 
-  /// add SiPixelModuleStatus for detID
+  // add SiPixelModuleStatus for detID
   void addModule(int detid);
 
-  /// add SiPixelModuleStatus for detID, specifying nrocs
+  // add SiPixelModuleStatus for detID, specifying nrocs
   void addModule(int detid, int nrocs);
 
-  /// fill hit in double idc in ROC roc into module detid
+  // fill hit in double idc in ROC roc into module detid
   void fill(int detid, int roc, int idc);
 
-  ///// fill hit in OFFLINE col/row into module detid
-  //void fillOffline(int detid, int col, int row);
-
-  /// determine detector average nhits and RMS
+  // determine detector average nhits and RMS
   void occupancy();
 
-  /// analysis of detector performance
+  // analysis of detector performance
   void analysis();
 
-  /// number of modules in detector
+  // number of modules in detector
   int nmodules();
 
-  /// get a Module
+  // get a Module
   SiPixelModuleStatus* getModule(int detid);
 
-  /// provide for iterating over the entire detector
+  // provide for iterating over the entire detector
   std::map<int, SiPixelModuleStatus>::iterator begin();
   std::map<int, SiPixelModuleStatus>::iterator next();
   std::map<int, SiPixelModuleStatus>::iterator end();
 
-  void setBeginLS(int ls) {fLS0 = ls;}
-  void setEndLS(int ls) {fLS1 = ls;}
+  // set the time stamps
+  void setRunRange(int run0, int run1) {fRun0 = run0;fRun0 = run1;}
+  void setLSRange(int ls0, int ls1)  {fLS0 = ls0; fLS1 = ls1;}
+  void setRefTime(std::time_t refTime0, std::time_t refTime1) {fTime0 = refTime0; fTime1 = refTime1;}
 
-  void setBeginRun(int run) {fRun0 = run;}
-  void setEndRun(int run) {fRun1 = run;}
-
-  std::pair<int,int> getLSRange()  { return std::make_pair(fLS0,fLS1); }
-  std::pair<int,int> getRunRange() { return std::make_pair(fRun0,fRun1); }
-
-  void resetDetectorStatus() { fModules.clear(); }
+  void resetDetectorStatus() { fModules.clear(); fDetAverage=0; fDetSigma=0; }
 
  private:
 
   std::map<int, SiPixelModuleStatus> fModules;
   //std::map<int, SiPixelModuleStatus>::iterator fNext;
 
-  /// first and last lumisection seen in this instance
+  // first and last lumisection seen in this instance
   int fLS0, fLS1;
 
-  /// first and last run seen in this instance (likely to be the same number!)
+  // first and last run seen in this instance (likely to be the same number!)
   int fRun0, fRun1;
 
-  /// average (per module) number of hits over entire detector
+  // being and end time stamp
+  std::time_t fTime0, fTime1;
+  
+  // average (per module) number of hits over entire detector
   int fDetAverage, fDetSigma;
 
-  /// total hits in detector
+  // total hits in detector
   unsigned long int fDetHits;
 
 };
