@@ -103,6 +103,7 @@ from Calibration.TkAlCaRecoProducers.ALCARECOSiStripPCLHistos_cff import *
 # FIXME: this needs to be adapted to run on TkAlMinBiasHI tracks
 from Alignment.CommonAlignmentProducer.ALCARECOPromptCalibProdSiPixelAli_cff import *
 
+from CalibTracker.SiPixelQuality.ALCARECOPromptCalibProdSiPixel_cff import *
 
 
 
@@ -162,6 +163,7 @@ pathALCARECOPromptCalibProdSiStrip = cms.Path(seqALCARECOPromptCalibProdSiStrip)
 pathALCARECOPromptCalibProdSiStripGains = cms.Path(seqALCARECOPromptCalibProdSiStripGains)
 pathALCARECOPromptCalibProdSiStripGainsAAG = cms.Path(seqALCARECOPromptCalibProdSiStripGainsAAG)
 pathALCARECOPromptCalibProdSiPixelAli = cms.Path(seqALCARECOPromptCalibProdSiPixelAli)
+pathALCARECOPromptCalibProdSiPixel = cms.Path(seqALCARECOPromptCalibProdSiPixel)
 pathALCARECOSiStripPCLHistos = cms.Path(seqALCARECOSiStripPCLHistos)
 
 # AlCaReco event content definitions:
@@ -535,6 +537,14 @@ ALCARECOStreamPromptCalibProdSiPixelAli = cms.FilteredStream(
 	dataTier = cms.untracked.string('ALCARECO')
 	)
 
+ALCARECOStreamPromptCalibProdSiPixel = cms.FilteredStream(
+        responsible = 'Tongguang Cheng',
+        name = 'PromptCalibProdSiPixel',
+        paths  = (pathALCARECOPromptCalibProdSiPixel),
+        content = OutALCARECOPromptCalibProdSiPixel.outputCommands,
+        selectEvents = OutALCARECOPromptCalibProdSiPixel.SelectEvents,
+        dataTier = cms.untracked.string('ALCARECO')
+        )
 
 ALCARECOStreamSiStripPCLHistos = cms.FilteredStream(
 	responsible = 'Gianluca Cerminara',
