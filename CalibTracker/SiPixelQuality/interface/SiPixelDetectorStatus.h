@@ -31,6 +31,9 @@ public:
 
   // determine detector average nhits and RMS
   void occupancy();
+  int perRocOccupancy(){ return fDetAverage; }
+  int perRocOccupancyVariance(){ return fDetSigma; }
+  unsigned long int totOccupancy(){ return fDetHits; }
 
   // number of modules in detector
   int nmodules();
