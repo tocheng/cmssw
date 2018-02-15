@@ -20,3 +20,6 @@
 <library   file="SiPixelStatusProducer.cc" name="SiPixelStatusProducer">
   <flags   EDM_PLUGIN="1"/>
 </library>
+<library   file="SiPixelStatusHarvester.cc" name="SiPixelStatusHarvester">
+  <flags   EDM_PLUGIN="1"/>
+</library>

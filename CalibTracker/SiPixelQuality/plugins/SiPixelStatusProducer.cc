@@ -56,7 +56,6 @@ using namespace std;
 SiPixelStatusProducer::SiPixelStatusProducer(const edm::ParameterSet& iConfig){
   // get parameter
   fPixelClusterLabel_   = iConfig.getParameter<edm::ParameterSet>("SiPixelStatusProducerParameters").getUntrackedParameter<edm::InputTag>("pixelClusterLabel");
-  //"siPixelClusters"
   fSiPixelClusterToken_ = consumes<edmNew::DetSetVector<SiPixelCluster>>(fPixelClusterLabel_);
   resetNLumi_   = iConfig.getParameter<edm::ParameterSet>("SiPixelStatusProducerParameters").getUntrackedParameter<int>("resetEveryNLumi",-1);
 
@@ -223,7 +222,7 @@ void SiPixelStatusProducer::endLuminosityBlockProduce(edm::LuminosityBlock& lumi
   // save result
   auto result = std::make_unique<SiPixelDetectorStatus>();
   *result = fDet;
-  lumiSeg.put(std::move(result), std::string("siPixelDetectorStatus"));
+  lumiSeg.put(std::move(result), std::string("siPixelStatus"));
 
   // reset detector status and lumi-counter
   fDet.resetDetectorStatus();
