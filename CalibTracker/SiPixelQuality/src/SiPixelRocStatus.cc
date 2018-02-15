@@ -10,7 +10,7 @@ using namespace std;
 // ----------------------------------------------------------------------
 SiPixelRocStatus::SiPixelRocStatus() {
 
-  for (int i = 0; i < nDC; ++i) {
+  for (int i = 0; i < nDC_; ++i) {
        fDC[i] = 0;
   }
 
@@ -25,30 +25,30 @@ SiPixelRocStatus::~SiPixelRocStatus() {
 // ----------------------------------------------------------------------
 void SiPixelRocStatus::fill(int idc) {
 
-  if (idc<nDC) fDC[idc]++;
+  if (idc<nDC_) fDC[idc]++;
 
 }
 
 // ----------------------------------------------------------------------
 void SiPixelRocStatus::fill(int idc, int hits) {
 
-  if (idc<nDC) fDC[idc] += hits;
+  if (idc<nDC_) fDC[idc] += hits;
 
 }
 
 
 // ----------------------------------------------------------------------
-int SiPixelRocStatus::status(int idc) {
+int SiPixelRocStatus::statusDC(int idc) {
 
-  return (idc<nDC?fDC[idc]:-1);
+  return (idc<nDC_?fDC[idc]:-1);
 
 }
 
 // ----------------------------------------------------------------------
-int SiPixelRocStatus::status() {
+int SiPixelRocStatus::statusROC() {
 
   int count(0) ;
-  for (int idc = 0; idc < nDC; ++idc) {
+  for (int idc = 0; idc < nDC_; ++idc) {
     count += fDC[idc];
   }
   return count;

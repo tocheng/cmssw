@@ -21,18 +21,16 @@ public:
 
   // add SiPixelModuleStatus for detID
   void addModule(int detid);
-
   // add SiPixelModuleStatus for detID, specifying nrocs
   void addModule(int detid, int nrocs);
+  // add a SiPixelModuleStatus obj for detID
+  void addModule(int detid, SiPixelModuleStatus a);
 
   // fill hit in double idc in ROC roc into module detid
   void fill(int detid, int roc, int idc);
 
   // determine detector average nhits and RMS
   void occupancy();
-
-  // analysis of detector performance
-  void analysis();
 
   // number of modules in detector
   int nmodules();
@@ -51,6 +49,10 @@ public:
   void setRefTime(std::time_t refTime0, std::time_t refTime1) {fTime0 = refTime0; fTime1 = refTime1;}
 
   void resetDetectorStatus() { fModules.clear(); fDetAverage=0; fDetSigma=0; }
+
+  // combine detector status
+  void updateDetectorStatus(SiPixelDetectorStatus newData);
+  SiPixelDetectorStatus combineDetectorStatus(SiPixelDetectorStatus newData);
 
  private:
 

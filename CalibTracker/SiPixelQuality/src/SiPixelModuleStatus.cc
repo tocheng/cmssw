@@ -43,27 +43,27 @@ void SiPixelModuleStatus::fill(int iroc, int idc, int nhit) {
 
 
 // ----------------------------------------------------------------------
-int SiPixelModuleStatus::status(int iroc, int idc) {
+int SiPixelModuleStatus::statusDC(int iroc, int idc) {
 
-  return (iroc < fNrocs ? fRocs[iroc].status(idc) : -1);
-
-}
-
-
-// ----------------------------------------------------------------------
-int SiPixelModuleStatus::status(int iroc) {
-
-  return (iroc < fNrocs ? fRocs[iroc].status() : -1);
+  return (iroc < fNrocs ? fRocs[iroc].statusDC(idc) : -1);
 
 }
 
 
 // ----------------------------------------------------------------------
-int SiPixelModuleStatus::status() {
+int SiPixelModuleStatus::statusROC(int iroc) {
+
+  return (iroc < fNrocs ? fRocs[iroc].statusROC() : -1);
+
+}
+
+
+// ----------------------------------------------------------------------
+int SiPixelModuleStatus::statusMOD() {
 
   int count(0);
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
-    count += status(iroc);
+    count += statusROC(iroc);
   }
   return count;
 
@@ -106,13 +106,13 @@ void SiPixelModuleStatus::occupancy() {
   fModAverage = fModSigma = 0.;
   double ave(0.), sig(0.);
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
-    int inc = status(iroc);
+    int inc = statusROC(iroc);
     ave += inc;
   }
   fModAverage = ave/fNrocs;
 
   for (int iroc = 0; iroc < fNrocs; ++iroc) {
-    int inc = status(iroc);
+    int inc = statusROC(iroc);
     sig += (fModAverage-inc)*(fModAverage-inc);
   }
 
@@ -123,6 +123,27 @@ void SiPixelModuleStatus::occupancy() {
 
 
 // ----------------------------------------------------------------------
+// Be careful : return the address not the value of ROC status
 SiPixelRocStatus* SiPixelModuleStatus::getRoc(int i) {
   return &fRocs[i];
+}
+
+// ----------------------------------------------------------------------
+void SiPixelModuleStatus::updateModuleStatus(SiPixelModuleStatus newData) {
+
+     bool isSameModule = true;
+     if( fDetid!=newData.detid() || fNrocs!=newData.nrocs()) {
+         isSameModule = false;
+     }
+
+     if(isSameModule){
+
+        for (int iroc = 0; iroc < fNrocs; ++iroc) {
+             int nDC = fRocs[iroc].nDC();
+             for(int idc = 0; idc < nDC; ++idc) {
+                 fRocs[iroc].fill(idc,newData.statusDC(iroc,idc));
+             }
+          }
+     }
+
 }

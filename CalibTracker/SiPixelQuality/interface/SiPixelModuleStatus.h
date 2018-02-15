@@ -21,16 +21,13 @@ public:
   void fill(int iroc, int idc, int nhit);
 
   /// return DC status of a ROC (=hits on DC idc on ROC iroc)
-  int status(int iroc, int idc);
+  int statusDC(int iroc, int idc);
 
   /// return ROC status (= hits on ROC iroc)
-  int status(int iroc);
+  int statusROC(int iroc);
 
   /// return module status (= hits on module)
-  int status();
-
-  /// do dc counts analysis
-  void analysis(double thr0 = 10, double rms = 1);
+  int statusMOD();
 
   /// get a ROC
   SiPixelRocStatus* getRoc(int i);
@@ -44,6 +41,10 @@ public:
 
   /// calculate (averaged over this module's ROCs) mean hit number and its sigma
   void occupancy();
+
+  /// combine new data to update(topup) module status
+  SiPixelModuleStatus combineModuleStatus(SiPixelModuleStatus newData);
+  void updateModuleStatus(SiPixelModuleStatus newData);
 
 private:
 

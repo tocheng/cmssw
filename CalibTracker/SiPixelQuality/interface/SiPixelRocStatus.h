@@ -10,11 +10,13 @@ public:
   void fill(int idc);
   void fill(int idc, int hits);
 
-  int status(int idc);
-  int status();
+  int statusDC(int idc);
+  int statusROC();
+
+  int nDC(){ return nDC_;}
 
 private:
-  const int nDC = 26;
+  const int nDC_ = 26;
   int fDC[26];
 
 };

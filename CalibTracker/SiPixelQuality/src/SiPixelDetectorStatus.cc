@@ -37,8 +37,8 @@ void SiPixelDetectorStatus::readFromFile(std::string filename) {
   SiPixelModuleStatus *pMod(0);
   bool readOK(false);
   while (getline(INS, sline)) {
+
     if (string::npos != sline.find("# SiPixelDetectorStatus START")) {
-      // cout << "found start marker" << endl;
       readOK = true;
       continue;
     }
@@ -46,8 +46,6 @@ void SiPixelDetectorStatus::readFromFile(std::string filename) {
 
     if (string::npos != sline.find("# SiPixelDetectorStatus END")) {
       pMod->setNrocs(nroc+1);
-      // cout << "set nrocs = " << nroc+1 << " for detid = " << oldDetId << " pMod->detid = " << pMod->detid() << endl;
-      // cout << "found end marker" << endl;
       break;
     }
 
@@ -86,13 +84,17 @@ void SiPixelDetectorStatus::readFromFile(std::string filename) {
       fDetHits += hits;
       pMod->fill(roc, dc, hits);
     }
+
   }
+
   INS.close();
+
 }
 
 
 // ----------------------------------------------------------------------
 void SiPixelDetectorStatus::dumpToFile(std::string filename) {
+
   ofstream OD(filename.c_str());
   OD << "# SiPixelDetectorStatus START" << endl;
   OD << "# SiPixelDetectorStatus for LS  " << fLS0 << " .. " << fLS1 << endl;
@@ -102,33 +104,38 @@ void SiPixelDetectorStatus::dumpToFile(std::string filename) {
   for (map<int, SiPixelModuleStatus>::iterator it = begin(); it != itEnd; ++it) {
     for (int iroc = 0; iroc < it->second.nrocs(); ++iroc) {
       for (int idc = 0; idc < 26; ++idc) {
-	OD << Form("%10d %2d %2d %3d", it->first, iroc, idc, it->second.getRoc(iroc)->status(idc)) << endl;
+	OD << Form("%10d %2d %2d %3d", it->first, iroc, idc, it->second.getRoc(iroc)->statusDC(idc)) << endl;
       }
     }
   }
   OD << "# SiPixelDetectorStatus END" << endl;
   OD.close();
+
 }
 
 
 // ----------------------------------------------------------------------
 void SiPixelDetectorStatus::addModule(int detid) {
-  SiPixelModuleStatus a(detid);
-  fModules.insert(make_pair(detid, a));
+     SiPixelModuleStatus a(detid);
+     fModules.insert(make_pair(detid, a));
 }
-
-
 // ----------------------------------------------------------------------
 void SiPixelDetectorStatus::addModule(int detid, int nrocs) {
-  SiPixelModuleStatus a(detid, nrocs);
-  fModules.insert(make_pair(detid, a));
+     SiPixelModuleStatus a(detid, nrocs);
+     fModules.insert(make_pair(detid, a));
 }
+// ----------------------------------------------------------------------
+void SiPixelDetectorStatus::addModule(int detid, SiPixelModuleStatus a) {
+     fModules.insert(make_pair(detid, a));
+}
+
 
 // ----------------------------------------------------------------------
 void SiPixelDetectorStatus::fill(int detid, int roc, int idc) {
-  ++fDetHits;
-  fModules[detid].fill(roc, idc);
+     ++fDetHits;
+     fModules[detid].fill(roc, idc);
 }
+
 
 // ----------------------------------------------------------------------
 map<int, SiPixelModuleStatus>::iterator SiPixelDetectorStatus::begin() {
@@ -151,7 +158,9 @@ int SiPixelDetectorStatus::nmodules() {
 }
 
 // ----------------------------------------------------------------------
+// Be careful: return the address not the value of module status
 SiPixelModuleStatus* SiPixelDetectorStatus::getModule(int detid) {
+
   if (fModules.find(detid) == fModules.end()) {
     return 0;
   }
@@ -167,18 +176,65 @@ void SiPixelDetectorStatus::occupancy() {
   int nrocs(0);
   map<int, SiPixelModuleStatus>::iterator itEnd = end();
   for (map<int, SiPixelModuleStatus>::iterator it = begin(); it != itEnd; ++it) {
-    int inc = it->second.status();
+    int inc = it->second.statusMOD();
     ave   += inc;
     nrocs += it->second.nrocs();
   }
   fDetAverage = ave/nrocs;
 
   for (map<int, SiPixelModuleStatus>::iterator it = begin(); it != itEnd; ++it) {
-    int inc = it->second.status();
+    int inc = it->second.statusMOD();
     sig += (fDetAverage - inc) * (fDetAverage - inc);
   }
 
   fDetSigma   = sig/(nrocs - 1);
   fDetSigma   = TMath::Sqrt(fDetSigma);
+
+}
+
+// combine status from different data (coming from different run/lumi)
+void SiPixelDetectorStatus::updateDetectorStatus(SiPixelDetectorStatus newData){
+
+  // loop over new data status
+  std::map<int, SiPixelModuleStatus>::iterator itEnd = newData.end();
+  for (map<int, SiPixelModuleStatus>::iterator it = newData.begin(); it != itEnd; ++it) {
+       
+       int detid = it->first;
+       if(fModules.find(detid) == fModules.end()){// if the detid is not in the current module status
+         // then insert new module status
+         fModules.insert(make_pair(detid, *(newData.getModule(detid)) ) );
+       }          
+       else{
+          // otherwise update the current module status
+          fModules[detid].updateModuleStatus( *(newData.getModule(detid)) );
+       }
+  }
+
+}
+
+SiPixelDetectorStatus SiPixelDetectorStatus::combineDetectorStatus(SiPixelDetectorStatus newData){
+
+  SiPixelDetectorStatus combine;
+
+  // loop over current module status
+  std::map<int, SiPixelModuleStatus>::iterator itEnd = end();
+  for (map<int, SiPixelModuleStatus>::iterator it = begin(); it != itEnd; ++it) {
+
+       int detid = it->first;
+       combine.addModule(detid, fModules[detid]);
+
+       if(newData.getModule(detid) != 0){ // the detid in current data is also in new data
+          // then update the module status
+          SiPixelModuleStatus* moduleStatus = combine.getModule(detid);
+          moduleStatus->updateModuleStatus(*(newData.getModule(detid)));
+       }
+       else{
+          // otherwise insert new module status
+          combine.addModule(detid, *(newData.getModule(detid)) );
+       }
+
+  }
+
+  return combine; 
 
 }
