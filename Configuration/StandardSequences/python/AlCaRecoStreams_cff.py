@@ -40,6 +40,8 @@ from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalMinBias_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalMinBiasAAG_cff import *
 # AlCaReco for tracker calibration using ZeroBias events (noise)
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalZeroBias_cff import *
+# AlCaReco for SiPixel Bad Components using ZeroBias events
+from Calibration.TkAlCaRecoProducers.ALCARECOSiPixelCalZeroBias_cff import *
 
 ###############################################################
 # LUMI Calibration
@@ -160,6 +162,7 @@ pathALCARECOSiPixelLorentzAngle = cms.Path(seqALCARECOSiPixelLorentzAngle)
 pathALCARECOSiStripCalMinBias = cms.Path(seqALCARECOSiStripCalMinBias*ALCARECOSiStripCalMinBiasDQM)
 pathALCARECOSiStripCalMinBiasAAG = cms.Path(seqALCARECOSiStripCalMinBiasAAG*ALCARECOSiStripCalMinBiasAAGDQM)
 pathALCARECOSiStripCalZeroBias = cms.Path(seqALCARECOSiStripCalZeroBias*ALCARECOSiStripCalZeroBiasDQM)
+pathALCARECOSiPixelCalZeroBias = cms.Path(seqALCARECOSiPixelCalZeroBias)
 
 pathALCARECOLumiPixelsMinBias       = cms.Path(seqALCARECOLumiPixelsMinBias)
 pathALCARECOAlCaPCCZeroBiasFromRECO = cms.Path(seqALCARECOAlCaPCCZeroBiasFromRECO)
@@ -361,6 +364,15 @@ ALCARECOStreamSiStripCalZeroBias = cms.FilteredStream(
 	selectEvents = OutALCARECOSiStripCalZeroBias.SelectEvents,
 	dataTier = cms.untracked.string('ALCARECO')
 	)
+
+ALCARECOStreamSiPixelCalZeroBias = cms.FilteredStream(
+        responsible = 'Tongguang Cheng',
+        name = 'SiPixelCalZeroBias',
+        paths  = (pathALCARECOSiPixelCalZeroBias),
+        content = OutALCARECOSiPixelCalZeroBias.outputCommands,
+        selectEvents = OutALCARECOSiPixelCalZeroBias.SelectEvents,
+        dataTier = cms.untracked.string('ALCARECO')
+        )
 
 ALCARECOStreamLumiPixelsMinBias = cms.FilteredStream(
 	responsible = 'Chris Palmer',
@@ -730,8 +742,6 @@ ALCARECOStreamPromptCalibProd = cms.FilteredStream(
 	selectEvents = OutALCARECOPromptCalibProd.SelectEvents,
 	dataTier = cms.untracked.string('ALCARECO')
 	)
-
-
 
 ALCARECOStreamPromptCalibProdSiStrip = cms.FilteredStream(
 	responsible = 'Gianluca Cerminara',

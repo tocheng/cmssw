@@ -44,6 +44,8 @@ from Calibration.TkAlCaRecoProducers.ALCARECOSiPixelLorentzAngle_Output_cff impo
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalMinBias_Output_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalMinBiasAAG_Output_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripCalZeroBias_Output_cff import *
+# AlCaReco for SiPixel Bad Component using ZeroBias events
+from Calibration.TkAlCaRecoProducers.ALCARECOSiPixelCalZeroBias_Output_cff import *
 
 # AlCaReco for tracker based alignment using beam halo
 from Alignment.CommonAlignmentProducer.ALCARECOTkAlBeamHalo_Output_cff import *
@@ -131,13 +133,13 @@ from Calibration.TkAlCaRecoProducers.ALCARECOPromptCalibProd_Output_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOPromptCalibProdSiStrip_Output_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOPromptCalibProdSiStripGains_Output_cff import *
 from Calibration.TkAlCaRecoProducers.ALCARECOPromptCalibProdSiStripGainsAAG_Output_cff import *
-
 from Calibration.TkAlCaRecoProducers.ALCARECOSiStripPCLHistos_Output_cff import *
+
+from CalibrTracker.SiPixelQuality.ALCARECOPromptCalibProdSiPixel_Output_cff import *
+
 from Alignment.CommonAlignmentProducer.ALCARECOPromptCalibProdSiPixelAli_Output_cff import *
 
 from Calibration.EcalCalibAlgos.ALCARECOPromptCalibProdEcalPedestals_Output_cff import *
-
-from CalibrTracker.SiPixelQuality.ALCARECOPromptCalibProdSiPixel_Output_cff import *
 
 # Pixel Cluster Counting ALCARECOs
 # in AlCaLumiPixels stream
