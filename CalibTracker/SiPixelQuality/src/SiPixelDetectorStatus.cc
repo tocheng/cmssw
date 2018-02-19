@@ -210,6 +210,9 @@ void SiPixelDetectorStatus::updateDetectorStatus(SiPixelDetectorStatus newData){
        }
   }
 
+  fDetHits = fDetHits + newData.totOccupancy();
+  
+
 }
 
 SiPixelDetectorStatus SiPixelDetectorStatus::combineDetectorStatus(SiPixelDetectorStatus newData){

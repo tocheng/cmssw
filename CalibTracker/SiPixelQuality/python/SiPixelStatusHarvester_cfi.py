@@ -4,7 +4,7 @@ siPixelStatusHarvester = cms.EDAnalyzer("SiPixelStatusHarvester",
 
     SiPixelStatusHarvesterParameters = cms.PSet(
 	outputBase = cms.untracked.string("nLumibased"), #runbased #dynamicLumibased
-        resetEveryNLumi = cms.untracked.int(10),
+        resetEveryNLumi = cms.untracked.int32(10),
 	moduleName = cms.untracked.string("siPixelStatusProducer"),
 	label      = cms.untracked.string("siPixelStatus"),
 	recordName   = cms.untracked.string("SiPixelQualityFromDbRcd"),

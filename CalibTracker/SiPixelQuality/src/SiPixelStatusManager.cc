@@ -21,10 +21,10 @@ SiPixelStatusManager::SiPixelStatusManager(){
 
 //--------------------------------------------------------------------------------------------------
 SiPixelStatusManager::SiPixelStatusManager(const ParameterSet& iConfig, edm::ConsumesCollector&& iC) :
-  outputBase_(iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("OutputBase")),
-  nLumi_(iConfig.getParameter<edm::ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<int>("ResetEveryNLumi")),
-  moduleName_(iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("ModuleName")),
-  label_     (iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("Label")){
+  outputBase_(iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("outputBase")),
+  nLumi_(iConfig.getParameter<edm::ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<int>("resetEveryNLumi")),
+  moduleName_(iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("moduleName")),
+  label_     (iConfig.getParameter<ParameterSet>("SiPixelStatusHarvesterParameters").getUntrackedParameter<std::string>("label")){
 
   edm::InputTag siPixelStatusTag_(moduleName_, label_);
   siPixelStatusToken_ = iC.consumes<SiPixelDetectorStatus,edm::InLumi>(siPixelStatusTag_);
@@ -66,13 +66,16 @@ void SiPixelStatusManager::readLumi(const LuminosityBlock& iLumi){
 //--------------------------------------------------------------------------------------------------
 void SiPixelStatusManager::createPayloads(){
 
+  /*
   if(siPixelStatusMap_.size() <= 1){
     return;
   }
+  */
 
-  siPixelStatusMap_iterator firstStatus     = siPixelStatusMap_.begin();
+  siPixelStatusMap_iterator firstStatus    = siPixelStatusMap_.begin();
   siPixelStatusMap_iterator lastStatus     = siPixelStatusMap_.end();
 
+  
   if(outputBase_ == "nLumibased" && nLumi_>1){
 
     std::map<LuminosityBlockNumber_t,SiPixelDetectorStatus> tmpSiPixelStatusMap_;

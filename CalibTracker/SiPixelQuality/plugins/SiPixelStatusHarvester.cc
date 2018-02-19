@@ -76,9 +76,6 @@ void SiPixelStatusHarvester::endRun(const edm::Run& iRun, const edm::EventSetup&
 
   edm::Service<cond::service::PoolDBOutputService> poolDbService;
 
-  //std::string outTxt = Form("%s_Run%d_SiPixelStatus.txt", outTxtFileName_.c_str(), iRun.id().run());
-  //std::ofstream outFile;
-  //outFile.open(outTxt.c_str());
 
   if(poolDbService.isAvailable() ) {
 
@@ -87,7 +84,11 @@ void SiPixelStatusHarvester::endRun(const edm::Run& iRun, const edm::EventSetup&
 
           SiPixelDetectorStatus tmpSiPixelStatus = it->second;
           // drop the IOV if the statistics is too low
-          if(tmpSiPixelStatus.perRocOccupancy()<1.e3) continue;
+          //if(tmpSiPixelStatus.perRocOccupancy()<1.e3) continue;
+
+          std::string outTxt = Form("%s_Run%d_Lumi%d_SiPixelStatus.txt", outTxtFileName_.c_str(), iRun.id().run(),it->first);
+          std::ofstream outFile;
+          outFile.open(outTxt.c_str());
 
           cond::Time_t thisIOV = 1;
 
@@ -139,20 +140,22 @@ void SiPixelStatusHarvester::endRun(const edm::Run& iRun, const edm::EventSetup&
              edm::LogInfo("SiPixelStatusHarvester")
                  << "new tag requested" << std::endl;
 	     poolDbService->writeOne<SiPixelQuality>(siPixelQuality, thisIOV, recordName_);
-             //if (dumpTxt_){}    
          } 
          else {
             edm::LogInfo("SiPixelStatusHarvester")
                << "no new tag requested, appending IOV" << std::endl;
 	    poolDbService->writeOne<SiPixelQuality>(siPixelQuality, thisIOV, recordName_);
-            //if (dumpTxt_){}
+         }
+
+         if (dumpTxt_){ 
+            tmpSiPixelStatus.dumpToFile(outTxt); 
+            outFile.close();
          }
 
      }// loop over IOV-structured Map (payloads)
 
   } // if DB serverice is available
 
-  //outFile.close();
 
 }
 

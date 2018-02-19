@@ -65,14 +65,26 @@ SiPixelStatusProducer::SiPixelStatusProducer(const edm::ParameterSet& iConfig){
   beginLumi_ = endLumi_ = -1;
   endLumi_ = endRun_ = -1;
   
-  produces<SiPixelDetectorStatus, edm::Transition::EndLuminosityBlock>("siPixelStatus");
+  produces<SiPixelDetectorStatus, edm::Transition::EndLuminosityBlock>("siPixelStatusProducer");
 }
 
 //--------------------------------------------------------------------------------------------------
 SiPixelStatusProducer::~SiPixelStatusProducer(){
 
+   // FED counter
+   for (int i = MINFEDID; i < MAXFEDID; ++i) {
+        delete fPFC[i];
+   }
+
 }
 
+//--------------------------------------------------------------------------------------------------
+void SiPixelStatusProducer::beginJob(){
+
+  MINFEDID = FEDNumbering::MINSiPixeluTCAFEDID;
+  MAXFEDID = FEDNumbering::MAXSiPixeluTCAFEDID;
+
+}
 
 //--------------------------------------------------------------------------------------------------
 void SiPixelStatusProducer::beginLuminosityBlock(edm::LuminosityBlock const& lumiSeg, const edm::EventSetup& iSetup){
@@ -93,31 +105,47 @@ void SiPixelStatusProducer::beginLuminosityBlock(edm::LuminosityBlock const& lum
     
   countLumi_++;
 
-  if(siPixelFedCablingMapWatcher_.check(iSetup)||trackerDIGIGeoWatcher_.check(iSetup)||trackerTopoWatcher_.check(iSetup)){
+  // -- Setup cabling map and its map to detIDs
+  iSetup.get<SiPixelFedCablingMapRcd>().get(fCablingMap);
+  for (int i = MINFEDID; i < MAXFEDID; ++i) {
+      fPFC[i] = new SiPixelFrameConverter(fCablingMap.product(), i);
+  }
 
-    coord_.init(iSetup);
+  // -- Initialize FEDs for offline/online conversion" << endl;
+  iSetup.get<TrackerDigiGeometryRecord>().get(fTG);
+  // -- Initialize fIndices"
+  //int nmod(0);
+  for (TrackerGeometry::DetContainer::const_iterator it = fTG->dets().begin(); it != fTG->dets().end(); it++){
 
-    iSetup.get<SiPixelFedCablingMapRcd>().get(fCablingMap);
-    fCablingMap_ = fCablingMap.product();
+      const PixelGeomDetUnit *pgdu = dynamic_cast<const PixelGeomDetUnit*>((*it));
+      if (0 == pgdu) continue;
 
-    iSetup.get<TrackerDigiGeometryRecord>().get(fTG);
-    // -- Initialize fIndices for offline/online conversion
-    for (TrackerGeometry::DetContainer::const_iterator it = fTG->dets().begin(); it != fTG->dets().end(); it++){
+      DetId detId = (*it)->geographicalId();
+      uint32_t newDetId = detId;
 
-        const PixelGeomDetUnit *pgdu = dynamic_cast<const PixelGeomDetUnit*>((*it));
-        if (0 == pgdu) continue;
+      for (int fedid = MINFEDID; fedid < MAXFEDID; ++fedid) {
+          if (fPFC[fedid]->hasDetUnit(newDetId)) {
+            fFEDID.insert(make_pair(newDetId, fedid));
+            break;
+          }
+      }
 
-        DetId detId = (*it)->geographicalId();
+      int nrocs = pgdu->specificTopology().ncolumns()/52*pgdu->specificTopology().nrows()/80;
+      fDet.addModule(detId, nrocs);
+      map<pair<int, int>, triplet> a;
+      fIndices.insert(make_pair(detId, a));
 
+        /*
         int nrocs = pgdu->specificTopology().ncolumns()/52*pgdu->specificTopology().nrows()/80;
-        fDet.addModule(detId, nrocs);
-        map<pair<int, int>, triplet> a;
-        fIndices.insert(make_pair(detId, a));
-    }
-
-  } // if conditionWatcher_.check(iSetup)
+        cout << "detid = " << detId.rawId()
+             << " columns =  " << pgdu->specificTopology().ncolumns()
+             << " rows = " << pgdu->specificTopology().nrows()
+             << " nrocs = " << nrocs
+             << endl;
+        */
+        //++nmod;
+  }
   
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -142,45 +170,40 @@ void SiPixelStatusProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
        if (0 == dynamic_cast<const PixelGeomDetUnit*>((*it))) continue;
        DetId detId = (*it)->geographicalId();
        int detid = detId.rawId();
-
        // -- clusters on this det
        edmNew::DetSetVector<SiPixelCluster>::const_iterator isearch = clustColl->find(detId);
        if (isearch == clustColl->end()) continue;
+       int roc(0), rocC(0), rocR(0);
+       int mr0(-1), mc0(-1);
 
        // loop over clusters on a pixel module (DetId)
        for (edmNew::DetSet<SiPixelCluster>::const_iterator  di = isearch->begin(); di != isearch->end(); ++di) {
+        const vector<SiPixelCluster::Pixel>& pixvector = di->pixels();
+        // loop over pixels of a cluster
+        for (unsigned int i = 0; i < pixvector.size(); ++i) {
 
-         int roc(-1), rocC(-1), rocR(-1);
+             mr0 = pixvector[i].x;
+             mc0 = pixvector[i].y;
+             pair<int, int> offline(mc0, mr0);
 
-         const vector<SiPixelCluster::Pixel>& pixvector = di->pixels();
-         // loop over pixels of a cluster
-         for (unsigned int i = 0; i < pixvector.size(); ++i) {
-
-             int mr0 = pixvector[i].x;
-             int mc0 = pixvector[i].y;
-             pair<int, int> offline(mr0, mc0);
              map<pair<int, int>, triplet>::iterator pI = fIndices[detid].find(offline);
 
              if (pI != fIndices[detid].end()) {
                  roc  = pI->second.roc;
+                 rocC = pI->second.col;
                  rocR = pI->second.row;
-                 rocC = pI->second.column;
              } else {
-
-                 //onlineRocColRow(detId, mr0, mc0, roc, rocR, rocC);
-                 //cout<<"roc from coord - roc from cabling map "<<coord_.roc(detId,offline)<<"-"<<roc<<endl;
-
-                 roc = coord_.roc(detId,offline);
-                 triplet a;
-                 a.roc = roc;
-                 rocR = 39; rocC = 25;
-                 a.row = rocR; a.column = rocC;
-                 fIndices[detid].insert(make_pair(offline, a));
+                onlineRocColRow(detId, mr0, mc0, roc, rocC, rocR);
+                triplet a;
+                a.roc = roc;
+                a.col = rocC;
+                a.row = rocR;
+                fIndices[detid].insert(make_pair(offline, a));
              }
 
              fDet.fill(detId, roc, rocC/2);
 
-          } // -- loop over pixels of cluster
+           } // -- loop over pixels of cluster
 
         } // -- loop over clusters on a pixel module (DetId)
 
@@ -225,36 +248,44 @@ void SiPixelStatusProducer::endLuminosityBlockProduce(edm::LuminosityBlock& lumi
   countLumi_=0;
 }
 
+
+void SiPixelStatusProducer::endJob() {
+
+}
+
 //--------------------------------------------------------------------------------------------------
-void SiPixelStatusProducer::onlineRocColRow(const DetId &detId, int offlineRow, int offlineCol, int &roc, int &row, int &col) {
+void SiPixelStatusProducer::onlineRocColRow(const DetId &pID, int offlineRow, int offlineCol, int &roc, int &col, int &row) {
 
-  int fedId = coord_.fedid(detId);
+  int realfedID = -1;
+  uint32_t newDetId = pID;
 
-  // from detector to cabling
   sipixelobjects::ElectronicIndex cabling;
-  sipixelobjects::DetectorIndex detector = {detId, offlineRow, offlineCol};
+  sipixelobjects::DetectorIndex detector = {pID, offlineRow, offlineCol};
 
-  SiPixelFrameConverter converter(fCablingMap_, fedId);
-  converter.toCabling(cabling, detector);
+  realfedID = fFEDID[newDetId];
+  fPFC[realfedID]->toCabling(cabling, detector);
 
-  // then one can construct local pixel
   sipixelobjects::LocalPixel::DcolPxid loc;
   loc.dcol = cabling.dcol;
   loc.pxid = cabling.pxid;
-  // and get local(online) row/column
+
   sipixelobjects::LocalPixel locpixel(loc);
+  sipixelobjects::CablingPathToDetUnit path = {(unsigned int) realfedID, (unsigned int)cabling.link, (unsigned int)cabling.roc};
+  const sipixelobjects::PixelROC *theRoc = fCablingMap->findItem(path);
+
+  roc = theRoc->idInDetUnit();
+  uint32_t detSubId = pID.subdetId();
+  if (detSubId == 1) { // ForBPIX
+    PixelBarrelName nameworker(pID);
+    std::string outputname = nameworker.name();
+    bool HalfModule = nameworker.isHalfModule();
+    if ((outputname.find("mO") != string::npos || outputname.find("mI") != string::npos) && (HalfModule)) {
+      // has to be BPIX; has to be minus side; has to be half module
+      roc = theRoc->idInDetUnit() + 8;
+      }
+  }
   col = locpixel.rocCol();
   row = locpixel.rocRow();
-
-  //sipixelobjects::CablingPathToDetUnit path = {(unsigned int) fedId, (unsigned int)cabling.link, (unsigned int)cabling.roc};
-  //const sipixelobjects::PixelROC *theRoc = fCablingMap->findItem(path);
-  const sipixelobjects::PixelROC *theRoc = converter.toRoc(cabling.link, cabling.roc);
-  roc = theRoc->idInDetUnit();
-  // has to be BPIX; has to be minus side; has to be half module
-  if (detId.subdetId() == PixelSubdetector::PixelBarrel && coord_.side(detId)==1 && coord_.half(detId))     
-  {
-      roc += 8;
-  }
 
 }
 

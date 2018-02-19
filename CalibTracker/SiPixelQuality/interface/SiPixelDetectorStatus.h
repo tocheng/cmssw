@@ -47,11 +47,15 @@ public:
   std::map<int, SiPixelModuleStatus>::iterator end();
 
   // set the time stamps
-  void setRunRange(int run0, int run1) {fRun0 = run0;fRun0 = run1;}
+  void setRunRange(int run0, int run1) {fRun0 = run0;fRun1 = run1;}
+  std::pair<int,int> getRunRange() {return std::make_pair(fRun0,fRun1);}
   void setLSRange(int ls0, int ls1)  {fLS0 = ls0; fLS1 = ls1;}
+  std::pair<int,int> getLSRange() {return std::make_pair(fLS0,fLS1);}
   void setRefTime(std::time_t refTime0, std::time_t refTime1) {fTime0 = refTime0; fTime1 = refTime1;}
+  std::pair<std::time_t,std::time_t> getRefTime() {return std::make_pair(fTime0,fTime1);}
 
-  void resetDetectorStatus() { fModules.clear(); fDetAverage=0; fDetSigma=0; }
+  void resetDetectorStatus() { fModules.clear(); fDetAverage=0; fDetSigma=0; fDetHits=0;
+                               fRun0 = 99999999; fRun1 = 0; fLS0 = 99999999; fLS1 = 0; }
 
   // combine detector status
   void updateDetectorStatus(SiPixelDetectorStatus newData);
