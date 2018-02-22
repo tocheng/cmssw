@@ -2,6 +2,7 @@
 #define SIPIXELMODULESTATUS_h
 
 #include "CalibTracker/SiPixelQuality/interface/SiPixelRocStatus.h"
+#include "DataFormats/SiPixelDetId/interface/PixelFEDChannel.h"
 
 #include <vector>
 
@@ -46,11 +47,22 @@ public:
   SiPixelModuleStatus combineModuleStatus(SiPixelModuleStatus newData);
   void updateModuleStatus(SiPixelModuleStatus newData);
 
+  /// set FED error 25
+  void fillStuckTBMs( PixelFEDChannel ch){
+       fPixelFEDChannels.push_back(ch);
+  }
+
+  /// get FED error 25
+  std::vector<PixelFEDChannel> getStuckTBMs(){
+       return fPixelFEDChannels;
+  }
+
 private:
 
   int fDetid, fNrocs;
   double fModAverage, fModSigma;
   std::vector<SiPixelRocStatus> fRocs;
+  std::vector<PixelFEDChannel> fPixelFEDChannels; 
 
 };
 

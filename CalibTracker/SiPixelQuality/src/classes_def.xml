@@ -3,8 +3,8 @@
     <version ClassVersion="4" checksum="2243542524"/>
    </class>
    <class name="std::vector<SiPixelRocStatus>"/>
-   <class name="SiPixelModuleStatus" ClassVersion="3">
-    <version ClassVersion="3" checksum="1775077559"/>
+   <class name="SiPixelModuleStatus" ClassVersion="4">
+    <version ClassVersion="4" checksum="1676700757"/>
    </class>
    <class name="std::pair<int, SiPixelModuleStatus>"/>
    <class name="std::map<int, SiPixelModuleStatus>"/>

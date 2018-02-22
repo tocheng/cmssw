@@ -143,7 +143,10 @@ void SiPixelModuleStatus::updateModuleStatus(SiPixelModuleStatus newData) {
              for(int idc = 0; idc < nDC; ++idc) {
                  fRocs[iroc].fill(idc,newData.statusDC(iroc,idc));
              }
-          }
+        }
+        std::vector<PixelFEDChannel> newPixelFEDChannels = newData.getStuckTBMs();
+        fPixelFEDChannels.reserve( fPixelFEDChannels.size() + newPixelFEDChannels.size() );
+        fPixelFEDChannels.insert( fPixelFEDChannels.end(), newPixelFEDChannels.begin(), newPixelFEDChannels.end() );
      }
 
 }
