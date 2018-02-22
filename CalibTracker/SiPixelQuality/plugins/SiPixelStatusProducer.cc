@@ -32,6 +32,8 @@
 #include "DataFormats/SiPixelDetId/interface/PixelBarrelName.h"
 #include "DataFormats/SiPixelDetId/interface/PixelEndcapName.h"
 #include "DataFormats/SiPixelDigi/interface/PixelDigi.h"
+// "FED error 25" - stuck TBM
+#include "DataFormats/SiPixelDetId/interface/PixelFEDChannel.h"
 
 // CMSSW CondFormats
 #include "CondFormats/RunInfo/interface/RunSummary.h"
@@ -55,8 +57,15 @@ using namespace std;
 //--------------------------------------------------------------------------------------------------
 SiPixelStatusProducer::SiPixelStatusProducer(const edm::ParameterSet& iConfig){
   // get parameter
+
+  std::vector<edm::InputTag> badPixelFEDChannelCollectionLabels_ = iConfig.getParameter<std::vector<edm::InputTag> >("badPixelFEDChannelCollections");
+  for (auto &t : badPixelFEDChannelCollectionLabels_) 
+      theBadPixelFEDChannelsTokens_.push_back(consumes<PixelFEDChannelCollection>(t));
+  //  badPixelFEDChannelCollections = cms.VInputTag(cms.InputTag('siPixelDigis')) 
+
   fPixelClusterLabel_   = iConfig.getParameter<edm::ParameterSet>("SiPixelStatusProducerParameters").getUntrackedParameter<edm::InputTag>("pixelClusterLabel");
   fSiPixelClusterToken_ = consumes<edmNew::DetSetVector<SiPixelCluster>>(fPixelClusterLabel_);
+  monitorOnDoubleColumn_ = iConfig.getParameter<edm::ParameterSet>("SiPixelStatusProducerParameters").getUntrackedParameter<bool>("monitorOnDoubleColumn",false);
   resetNLumi_   = iConfig.getParameter<edm::ParameterSet>("SiPixelStatusProducerParameters").getUntrackedParameter<int>("resetEveryNLumi",1);
 
   ftotalevents = 0;
@@ -106,10 +115,15 @@ void SiPixelStatusProducer::beginLuminosityBlock(edm::LuminosityBlock const& lum
 
         const PixelGeomDetUnit *pgdu = dynamic_cast<const PixelGeomDetUnit*>((*it));
         if (0 == pgdu) continue;
-
         DetId detId = (*it)->geographicalId();
 
-        int nrocs = pgdu->specificTopology().ncolumns()/52*pgdu->specificTopology().nrows()/80;
+        // don't want to use magic number row 80 column 52
+        const PixelTopology* topo = static_cast<const PixelTopology*>(&pgdu->specificTopology());
+        int rowsperroc = topo->rowsperroc();
+        int colsperroc = topo->colsperroc();
+
+        int nrocs = pgdu->specificTopology().ncolumns()/colsperroc*pgdu->specificTopology().nrows()/rowsperroc;
+
         fDet.addModule(detId, nrocs);
         map<pair<int, int>, triplet> a;
         fIndices.insert(make_pair(detId, a));
@@ -117,7 +131,6 @@ void SiPixelStatusProducer::beginLuminosityBlock(edm::LuminosityBlock const& lum
 
   } // if conditionWatcher_.check(iSetup)
   
-
 }
 
 //--------------------------------------------------------------------------------------------------
@@ -139,7 +152,14 @@ void SiPixelStatusProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
   // loop over tracker DIGI geo
   for (TrackerGeometry::DetContainer::const_iterator it = fTG->dets().begin(); it != fTG->dets().end(); it++) { 
        
-       if (0 == dynamic_cast<const PixelGeomDetUnit*>((*it))) continue;
+       const PixelGeomDetUnit *pgdu = dynamic_cast<const PixelGeomDetUnit*>((*it));
+       if (0 == pgdu) continue;
+
+       // don't want to use magic number row 80 column 52
+       const PixelTopology* topo = static_cast<const PixelTopology*>(&pgdu->specificTopology());
+       int rowsperroc = topo->rowsperroc();
+       int colsperroc = topo->colsperroc();
+
        DetId detId = (*it)->geographicalId();
        int detid = detId.rawId();
 
@@ -167,13 +187,15 @@ void SiPixelStatusProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
                  rocC = pI->second.column;
              } else {
 
-                 //onlineRocColRow(detId, mr0, mc0, roc, rocR, rocC);
-                 //cout<<"roc from coord - roc from cabling map "<<coord_.roc(detId,offline)<<"-"<<roc<<endl;
+                 if(monitorOnDoubleColumn_) onlineRocColRow(detId, mr0, mc0, roc, rocR, rocC);
+                 else { 
+                        roc = coord_.roc(detId,offline);
+                        // just use the "center" of the ROC as a dummy local row/column
+                        rocR = rowsperroc/2-1; rocC = colsperroc/2-1;
+                 }
 
-                 roc = coord_.roc(detId,offline);
                  triplet a;
                  a.roc = roc;
-                 rocR = 39; rocC = 25;
                  a.row = rocR; a.column = rocC;
                  fIndices[detid].insert(make_pair(offline, a));
              }
@@ -186,6 +208,42 @@ void SiPixelStatusProducer::produce(edm::Event& iEvent, const edm::EventSetup& i
 
     } // loop over tracker DIGI Geo
  
+
+  // start tagging FED error 25
+  // the error given by FED due to stuck TBM
+  
+  edm::Handle<PixelFEDChannelCollection> pixelFEDChannelCollectionHandle;
+
+  // look over different resouces of takens
+  for (const edm::EDGetTokenT<PixelFEDChannelCollection>& tk: theBadPixelFEDChannelsTokens_) {
+       if (!iEvent.getByToken(tk, pixelFEDChannelCollectionHandle)) continue;
+        // loop over different (different DetId) PixelFED vectors in PixelFEDChannelCollection
+        for (const auto& disabledChannels: *pixelFEDChannelCollectionHandle) {
+
+            // loop over different PixelFED in a PixelFED vector (module)
+            for(const auto& ch: disabledChannels) {
+
+               const sipixelobjects::PixelROC *roc_first=NULL, *roc_last=NULL;
+               sipixelobjects::CablingPathToDetUnit path = {ch.fed, ch.link, 0};
+               // loop over the rocs in the channel
+               for (path.roc=1; path.roc<=(ch.roc_last-ch.roc_first)+1; path.roc++) {
+                   const sipixelobjects::PixelROC *roc = fCablingMap->findItem(path);
+               if (roc==NULL) continue;
+               assert(roc->rawId()==disabledChannels.detId());
+               if (roc->idInDetUnit()==ch.roc_first) roc_first=roc;
+               if (roc->idInDetUnit()==ch.roc_last) roc_last=roc;
+               }
+               if (roc_first==NULL || roc_last==NULL) {
+                  edm::LogError("PixelFEDChannelCollection")<<"Do not find either roc_first or roc_last in the cabling map.";
+                  continue;
+               }
+
+            } // loop over different PixelFED in a PixelFED vector (module)
+
+       } // loop over different (different DetId) PixelFED vectors in PixelFEDChannelCollection
+
+    }   // look over different resouces of takens
+
 }
 
 

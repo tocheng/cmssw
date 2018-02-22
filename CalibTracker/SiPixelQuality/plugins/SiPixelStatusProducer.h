@@ -60,6 +60,7 @@ class SiPixelStatusProducer : public edm::one::EDProducer<edm::EndLuminosityBloc
 
   // SiPixel offline<->online conversion
   // -- map (for each detid) of the map from offline col/row to the online roc/col/row
+  bool monitorOnDoubleColumn_; // whether to use CablingMap to get the roc/ pixel local coordinate
   std::map<int, std::map<std::pair<int, int>, triplet> >  fIndices;
   SiPixelCoordinates coord_;
 
@@ -68,6 +69,7 @@ class SiPixelStatusProducer : public edm::one::EDProducer<edm::EndLuminosityBloc
   std::string                                             fFileName;
   edm::InputTag                                           fPixelClusterLabel_;
   edm::EDGetTokenT<edmNew::DetSetVector<SiPixelCluster>>  fSiPixelClusterToken_;
+  std::vector<edm::EDGetTokenT<PixelFEDChannelCollection> > theBadPixelFEDChannelsTokens_;
 
   // Producer production (output collection)
   SiPixelDetectorStatus                                    fDet;
