@@ -119,6 +119,46 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   fbEtaEndcapH->SetParameter(2,5.2112);
   fbEtaEndcapH->SetParameter(3,0.303578);
   fbEtaEndcapH->SetParameter(4,-104.367);
+
+  //changes made by Bhumika on 2 august 2018
+
+  fcEtaBarrelH = std::make_unique<TF1>("fcEtaBarrelH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fcEtaBarrelH->SetParameter(0,0);
+  fcEtaBarrelH->SetParameter(1,2);
+  fcEtaBarrelH->SetParameter(2,0);
+  fcEtaBarrelH->SetParameter(3,1);
+
+  fcEtaEndcapH = std::make_unique<TF1>("fcEtaEndcapH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fcEtaEndcapH->SetParameter(0,0);
+  fcEtaEndcapH->SetParameter(1,0);
+  fcEtaEndcapH->SetParameter(2,0.05);
+  fcEtaEndcapH->SetParameter(3,0);
+  
+  fdEtaEndcapH = std::make_unique<TF1>("fdEtaEndcapH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fdEtaEndcapH->SetParameter(0,1.5);
+  fdEtaEndcapH->SetParameter(1,4);
+  fdEtaEndcapH->SetParameter(2,-1.1);
+  fdEtaEndcapH->SetParameter(3,1.0);
+
+  fcEtaBarrelEH = std::make_unique<TF1>("fcEtaBarrelEH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fcEtaBarrelEH->SetParameter(0,0);
+  fcEtaBarrelEH->SetParameter(1,2);
+  fcEtaBarrelEH->SetParameter(2,0);
+  fcEtaBarrelEH->SetParameter(3,1);
+
+  fcEtaEndcapEH = std::make_unique<TF1>("fcEtaEndcapEH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fcEtaEndcapEH->SetParameter(0,0);
+  fcEtaEndcapEH->SetParameter(1,0);
+  fcEtaEndcapEH->SetParameter(2,0);
+  fcEtaEndcapEH->SetParameter(3,0);
+  
+  fdEtaEndcapEH = std::make_unique<TF1>("fdEtaEndcapEH","[3]*((x-[0])^[1])+[2]",1.,1000.);
+  fdEtaEndcapEH->SetParameter(0,1.5);
+  fdEtaEndcapEH->SetParameter(1,2.0);
+  fdEtaEndcapEH->SetParameter(2,0.6);
+  fdEtaEndcapEH->SetParameter(3,1.0);
+  
+  //
 }
 
 void 
@@ -155,11 +195,11 @@ PFEnergyCalibration::energyEmHad(double t, double& e, double&h, double eta, doub
 
     // The angular correction 
     if ( e > 0. && thresh > 0. ) {
-      etaCorrE = 1.0 + aEtaBarrelEH(t) + 1.3*bEtaBarrelEH(t)*absEta*absEta;
+      etaCorrE = 1.0 + aEtaBarrelEH(t) + 1.3*bEtaBarrelEH(t)*cEtaBarrelEH(absEta);
       etaCorrH = 1.0;
     } else {
-      etaCorrE = 1.0 + aEtaBarrelH(t) + 1.3*bEtaBarrelH(t)*absEta*absEta; 
-      etaCorrH = 1.0 + aEtaBarrelH(t) + bEtaBarrelH(t)*absEta*absEta;
+      etaCorrE = 1.0 + aEtaBarrelH(t) + 1.3*bEtaBarrelH(t)*cEtaBarrelH(absEta);
+      etaCorrH = 1.0 + aEtaBarrelH(t) + bEtaBarrelH(t)*cEtaBarrelH(absEta);
     }
     if ( e > 0. && thresh > 0. ) 
       e = h > 0. ? threshE-threshH + etaCorrE * a * e : threshE + etaCorrE * a * e;
@@ -188,16 +228,24 @@ PFEnergyCalibration::energyEmHad(double t, double& e, double&h, double eta, doub
     double dEta = std::abs( absEta - 1.5 );
     double etaPow = dEta * dEta * dEta * dEta;
 
+
     if ( e > 0. && thresh > 0. ) {
-      etaCorrE = 1. + aEtaEndcapEH(t) + 1.3*bEtaEndcapEH(t)*(0.04 + etaPow);
-      etaCorrH = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*(0.04 + etaPow);
+      if(absEta<2.5) {
+        etaCorrE = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*cEtaEndcapEH(absEta);
+      }
+      else {
+        etaPow = dEta * dEta;
+        etaCorrE = 1. + aEtaEndcapEH(t) + 1.3*bEtaEndcapEH(t)*dEtaEndcapEH(absEta);
+      }
+      etaPow = dEta * dEta * dEta * dEta;
+      etaCorrH = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*cEtaEndcapEH(absEta);
     } else {
       etaCorrE = 1. + aEtaEndcapH(t) + 1.3*bEtaEndcapH(t)*(0.04 + etaPow);
       if(absEta<2.5) {
-	etaCorrH = 1. + aEtaEndcapH(t) + 0.05*bEtaEndcapH(t);
+        etaCorrH = 1. + aEtaEndcapH(t) + bEtaEndcapH(t)*cEtaEndcapH(absEta);
       }
       else {
-	etaCorrH = 1. + aEtaEndcapH(t) + bEtaEndcapH(t)*(0.04 + etaPow);
+        etaCorrH = 1. + aEtaEndcapH(t) + bEtaEndcapH(t)*dEtaEndcapEH(absEta);
       }
     }
 
@@ -447,7 +495,45 @@ PFEnergyCalibration::bEtaEndcapH(double x) const {
   }
 }
 
+//added by Bhumika Kansal on 3 august 2018
 
+double 
+PFEnergyCalibration::cEtaBarrelH(double x) const { 
+
+    cout<<"fcEtaBarrel H---->"<<fcEtaBarrelH->Eval(x);
+    return fcEtaBarrelH->Eval(x); 
+}
+
+double 
+PFEnergyCalibration::cEtaEndcapH(double x) const { 
+
+    return fcEtaEndcapH->Eval(x); 
+}
+
+double 
+PFEnergyCalibration::dEtaEndcapH(double x) const { 
+
+    return fdEtaEndcapH->Eval(x); 
+}
+
+double 
+PFEnergyCalibration::cEtaBarrelEH(double x) const { 
+
+    return fcEtaBarrelEH->Eval(x); 
+}
+
+double 
+PFEnergyCalibration::cEtaEndcapEH(double x) const { 
+
+    return fcEtaEndcapEH->Eval(x); 
+}
+
+double 
+PFEnergyCalibration::dEtaEndcapEH(double x) const { 
+
+    return fdEtaEndcapEH->Eval(x); 
+}
+//
 double
 PFEnergyCalibration::energyEm(const reco::PFCluster& clusterEcal,
 			      std::vector<double> &EclustersPS1,
