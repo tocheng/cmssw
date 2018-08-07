@@ -18,7 +18,7 @@ process.source = cms.Source("EmptySource",
 
 process.mywriter = cms.EDAnalyzer(
   "ProducePFCalibrationObject",
-  write = cms.untracked.bool(False),
+  write = cms.untracked.bool(True),
   toWrite = cms.VPSet(
             cms.PSet(fType      = cms.untracked.string("PFfa_BARREL"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
@@ -92,10 +92,42 @@ process.mywriter = cms.EDAnalyzer(
                      limits     = cms.untracked.vdouble(1., 1000.),
                      parameters = cms.untracked.vdouble(0.0214894, -0.266704, 5.2112, 0.303578, -104.367, )
                     ),
+#########################################################################################################
+            cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(0, 2, 0, 1, )
+                    ),
+            cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(0, 0, 0.05, 0, )
+                    ),
+            cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(1.5, 4, 1.1, 1, )
+                    ),
+            cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELEH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(0, 2, 0, 1, )
+                    ),
+            cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPEH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(0, 0, 0, 0, )
+                    ),
+            cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPEH"),
+                     formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
+                     limits     = cms.untracked.vdouble(1., 1000.),
+                     parameters = cms.untracked.vdouble(1.5, 2, 0.6, 1, )
+                    ),
+            
             ),
 
 
-  read = cms.untracked.bool(True),
+  read = cms.untracked.bool(False),
   toRead = cms.untracked.vstring("PFfa_BARREL",
                                  "PFfb_BARREL",
                                  "PFfc_BARREL",
@@ -116,6 +148,16 @@ process.mywriter = cms.EDAnalyzer(
                                  "PFfbEta_BARREL",
                                  "PFfaEta_ENDCAP",
                                  "PFfbEta_ENDCAP",
+                                 
+                                 #### New functions by Bhumika on September 2018
+
+                                 "PFfcEta_BARRELH",
+                                 "PFfcEta_ENDCAPH",
+                                 "PFfdEta_ENDCAPH",
+                                 "PFfcEta_BARRELEH",
+                                 "PFfcEta_ENDCAPEH",
+                                 "PFfdEta_ENDCAPEH",
+
 
                                  ) # same strings as fType
 )
@@ -139,13 +181,14 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
                                   )
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-process.GlobalTag.globaltag = '90X_upgrade2017_realistic_v20'
+# process.GlobalTag.globaltag = '90X_upgrade2017_realistic_v20'
 #process.GlobalTag.connect   = 'sqlite_file:/afs/cern.ch/user/c/cerminar/public/Alca/GlobalTag/GR_R_311_V2.db'
+process.GlobalTag.globaltag = '100X_upgrade2018_realistic_v10'
 
-process.GlobalTag.toGet = cms.VPSet(
-    cms.PSet(record = cms.string("PFCalibrationRcd"),
-             tag = cms.string("PFCalibration_v7_mc"),
-             connect = cms.string("sqlite_file:PFCalibration.db")
-             #connect = cms.untracked.string("sqlite_file:PFCalibration.db")
-             )
-    )
+# process.GlobalTag.toGet = cms.VPSet(
+#     cms.PSet(record = cms.string("PFCalibrationRcd"),
+#              tag = cms.string("PFCalibration_v7_mc"),
+#              connect = cms.string("sqlite_file:PFCalibration.db")
+#              #connect = cms.untracked.string("sqlite_file:PFCalibration.db")
+#              )
+#     )

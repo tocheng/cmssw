@@ -109,11 +109,11 @@ class PFEnergyCalibration
 
   //added by Bhumika on 2 august 2018
   std::unique_ptr<TF1> fcEtaBarrelEH;
-  std::unique_ptr<TF1> fcEtaEndcapEH; 
-  std::unique_ptr<TF1> fdEtaEndcapEH; 
+  std::unique_ptr<TF1> fcEtaEndcapEH;
+  std::unique_ptr<TF1> fdEtaEndcapEH;
   std::unique_ptr<TF1> fcEtaBarrelH;
-  std::unique_ptr<TF1> fcEtaEndcapH; 
-  std::unique_ptr<TF1> fdEtaEndcapH; 
+  std::unique_ptr<TF1> fcEtaEndcapH;
+  std::unique_ptr<TF1> fdEtaEndcapH;
 
  private:
   
