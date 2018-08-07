@@ -3,11 +3,11 @@ For Single Pion sample Generation:
 
 (For tcsh)  
 ```
-setenv SCRAM_ARCH slc6_amd64_gcc530 </br>
+setenv SCRAM_ARCH slc6_amd64_gcc630 </br>
 ```
 (For bash)
 ```
-export SCRAM_ARCH=slc6_amd64_gcc530
+export SCRAM_ARCH=slc6_amd64_gcc630
 cmsrel CMSSW_10_0_2
 cd CMSSW_10_0_2/src
 cmsenv
