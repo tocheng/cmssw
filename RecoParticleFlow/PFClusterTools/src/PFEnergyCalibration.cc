@@ -1,3 +1,4 @@
+
 #include "RecoParticleFlow/PFClusterTools/interface/PFEnergyCalibration.h"
 #include "CondFormats/PhysicsToolsObjects/interface/PerformancePayloadFromTFormula.h"
 
@@ -32,16 +33,16 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   //calibChrisClean.C calibration parameters shubham May 01, 2017
   //calibChrisClean.C calibration parameters bhumika Nov, 2018
   faBarrel = std::make_unique<TF1>("faBarrel","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
-  faBarrel->SetParameter(0,-13.9219);
-  faBarrel->SetParameter(1,14.9124);
-  faBarrel->SetParameter(2,5.38578);
-  faBarrel->SetParameter(3,0.861981);
-  faBarrel->SetParameter(4,-0.00759275);
-  faBarrel->SetParameter(5,0.00373563);
-  faBarrel->SetParameter(6,-1.17946);
-  faBarrel->SetParameter(7,-1.69561);
+  faBarrel->SetParameter(0,-30.7141);
+  faBarrel->SetParameter(1,31.7583);
+  faBarrel->SetParameter(2,4.40594);
+  faBarrel->SetParameter(3,1.70914);
+  faBarrel->SetParameter(4,0.0613696);
+  faBarrel->SetParameter(5,0.000104857);
+  faBarrel->SetParameter(6,-1.38927);
+  faBarrel->SetParameter(7,-0.743082);
   fbBarrel = std::make_unique<TF1>("fbBarrel","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
-  fbBarrel->SetParameter(0,2.25366);
+  fbBarrel->SetParameter(0,2.25366);	
   fbBarrel->SetParameter(1,0.537715);
   fbBarrel->SetParameter(2,-4.81375);
   fbBarrel->SetParameter(3,12.109);
@@ -75,21 +76,21 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   fbEtaBarrelH->SetParameter(2,34.9935);
 
   faEndcap = std::make_unique<TF1>("faEndcap","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
-  faEndcap->SetParameter(0,1.13733);
-  faEndcap->SetParameter(1,18.9063);
-  faEndcap->SetParameter(2,-43.4288);
-  faEndcap->SetParameter(3,0.613362);
-  faEndcap->SetParameter(4,-0.0473721);
-  faEndcap->SetParameter(5,1.58942e-18);
-  faEndcap->SetParameter(6,0.198447);
-  faEndcap->SetParameter(7,-11.0499);
+  faEndcap->SetParameter(0,1.17227);
+  faEndcap->SetParameter(1,13.1489);
+  faEndcap->SetParameter(2,-29.1672);
+  faEndcap->SetParameter(3,0.604223);
+  faEndcap->SetParameter(4,0.0426363);
+  faEndcap->SetParameter(5,3.30898e-15);
+  faEndcap->SetParameter(6,0.165293);
+  faEndcap->SetParameter(7,-7.56786);
   fbEndcap = std::make_unique<TF1>("fbEndcap","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
   fbEndcap->SetParameter(0,-0.974251);
   fbEndcap->SetParameter(1,1.61733);
   fbEndcap->SetParameter(2,0.0629183);
   fbEndcap->SetParameter(3,7.78495);
   fbEndcap->SetParameter(4,-0.774289);
-  fbEndcap->SetParameter(5,77.81399e-05);
+  fbEndcap->SetParameter(5,7.81399e-05);
   fbEndcap->SetParameter(6,0.139116);
   fbEndcap->SetParameter(7,-4.25551);
   fcEndcap = std::make_unique<TF1>("fcEndcap","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
@@ -101,13 +102,14 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   fcEndcap->SetParameter(5,0.234134);
   fcEndcap->SetParameter(6,1.42226);
   fcEndcap->SetParameter(7,-0.0997326);
-  faEtaEndcapEH = std::make_unique<TF1>("faEtaEndcapEH","[0]*exp(-(x-[1]))",1.,1000.);
-  faEtaEndcapEH->SetParameter(0,-0.000395405);
-  faEtaEndcapEH->SetParameter(1,11.1124);
+  faEtaEndcapEH = std::make_unique<TF1>("faEtaEndcapEH","[0]+[1]*exp(-x/[2])",1.,1000.);
+  faEtaEndcapEH->SetParameter(0,0.0112692);
+  faEtaEndcapEH->SetParameter(1,-2.68063);
+  faEtaEndcapEH->SetParameter(2,2.90973);
   fbEtaEndcapEH = std::make_unique<TF1>("fbEtaEndcapEH","[0]+[1]*exp(-x/[2])",1.,1000.);
-  fbEtaEndcapEH->SetParameter(0,-0.0366279);
-  fbEtaEndcapEH->SetParameter(1,-0.20907);
-  fbEtaEndcapEH->SetParameter(2,102.543);
+  fbEtaEndcapEH->SetParameter(0,-0.0192991);
+  fbEtaEndcapEH->SetParameter(1,-0.265);
+  fbEtaEndcapEH->SetParameter(2,80.5502);
   faEtaEndcapH = std::make_unique<TF1>("faEtaEndcapH","[0]+[1]*exp(-x/[2])+[3]*[3]*exp(-x*x/([4]*[4]))",1.,1000.);
   faEtaEndcapH->SetParameter(0,-0.0106029);
   faEtaEndcapH->SetParameter(1,-0.692207);
@@ -490,12 +492,8 @@ PFEnergyCalibration::bEtaEndcapH(double x) const {
 
     BinningPointByMap point;
     point.insert(BinningVariables::JetEt, x);
-    //cout<<"fbEtaEndcap H---->"<<pfCalibrations->getResult(PerformanceResult::PFfbEta_ENDCAPH,point)<<endl;
-    //cout<<"fbeta with payload"<<endl;
     return pfCalibrations->getResult(PerformanceResult::PFfbEta_ENDCAPH,point); 
   } else { 
-    // cout<<"fbEtaEndcap H---->"<<fbEtaEndcapH->Eval(x)<<endl;
-    //cout<<"fbeta WithOUT payload"<<endl;
     return fbEtaEndcapH->Eval(x); 
 
   }
@@ -505,7 +503,6 @@ PFEnergyCalibration::bEtaEndcapH(double x) const {
 
 double 
 PFEnergyCalibration::cEtaBarrelH(double x) const { 
- // cout<<"1 c b H "<<endl;
   if ( pfCalibrations ) { 
     BinningPointByMap point;
     point.insert(BinningVariables::JetEt, x);
@@ -637,23 +634,30 @@ std::ostream& operator<<(std::ostream& out,
 
   if ( calib.pfCalibrations ) { 
 
-    static std::map<std::string, PerformanceResult::ResultType> functType;
+    static const std::map<std::string, PerformanceResult::ResultType> functType = {
+      {"PFfa_BARREL", PerformanceResult::PFfa_BARREL},
+      {"PFfa_ENDCAP", PerformanceResult::PFfa_ENDCAP},
+      {"PFfb_BARREL", PerformanceResult::PFfb_BARREL},
+      {"PFfb_ENDCAP", PerformanceResult::PFfb_ENDCAP},
+      {"PFfc_BARREL", PerformanceResult::PFfc_BARREL},
+      {"PFfc_ENDCAP", PerformanceResult::PFfc_ENDCAP},
+      {"PFfaEta_BARRELH", PerformanceResult::PFfaEta_BARRELH},
+      {"PFfaEta_ENDCAPH", PerformanceResult::PFfaEta_ENDCAPH},
+      {"PFfbEta_BARRELH", PerformanceResult::PFfbEta_BARRELH},
+      {"PFfbEta_ENDCAPH", PerformanceResult::PFfbEta_ENDCAPH},
+      {"PFfaEta_BARRELEH", PerformanceResult::PFfaEta_BARRELEH},
+      {"PFfaEta_ENDCAPEH", PerformanceResult::PFfaEta_ENDCAPEH},
+      {"PFfbEta_BARRELEH", PerformanceResult::PFfbEta_BARRELEH},
+      {"PFfbEta_ENDCAPEH", PerformanceResult::PFfbEta_ENDCAPEH},
+      {"PFfcEta_BARRELH", PerformanceResult::PFfcEta_BARRELH},
+      {"PFfcEta_ENDCAPH", PerformanceResult::PFfcEta_ENDCAPH},
+      {"PFfdEta_ENDCAPH", PerformanceResult::PFfdEta_ENDCAPH},
+      {"PFfcEta_BARRELEH", PerformanceResult::PFfcEta_BARRELEH},
+      {"PFfcEta_ENDCAPEH", PerformanceResult::PFfcEta_ENDCAPEH},
+      {"PFfdEta_ENDCAPEH", PerformanceResult::PFfcEta_ENDCAPEH}
 
-    functType["PFfa_BARREL"] = PerformanceResult::PFfa_BARREL;
-    functType["PFfa_ENDCAP"] = PerformanceResult::PFfa_ENDCAP;
-    functType["PFfb_BARREL"] = PerformanceResult::PFfb_BARREL;
-    functType["PFfb_ENDCAP"] = PerformanceResult::PFfb_ENDCAP;
-    functType["PFfc_BARREL"] = PerformanceResult::PFfc_BARREL;
-    functType["PFfc_ENDCAP"] = PerformanceResult::PFfc_ENDCAP;
-    functType["PFfaEta_BARRELH"] = PerformanceResult::PFfaEta_BARRELH;
-    functType["PFfaEta_ENDCAPH"] = PerformanceResult::PFfaEta_ENDCAPH;
-    functType["PFfbEta_BARRELH"] = PerformanceResult::PFfbEta_BARRELH;
-    functType["PFfbEta_ENDCAPH"] = PerformanceResult::PFfbEta_ENDCAPH;
-    functType["PFfaEta_BARRELEH"] = PerformanceResult::PFfaEta_BARRELEH;
-    functType["PFfaEta_ENDCAPEH"] = PerformanceResult::PFfaEta_ENDCAPEH;
-    functType["PFfbEta_BARRELEH"] = PerformanceResult::PFfbEta_BARRELEH;
-    functType["PFfbEta_ENDCAPEH"] = PerformanceResult::PFfbEta_ENDCAPEH;
-    // functType["PFfcEta_BarrelH"] = PerformanceResult::PFfcEta_BarrelH; //
+    };
+
         
     for(std::map<std::string,PerformanceResult::ResultType>::const_iterator 
 	  func = functType.begin(); 

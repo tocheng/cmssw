@@ -18,7 +18,7 @@ process.source = cms.Source("EmptySource",
 
 process.mywriter = cms.EDAnalyzer(
   "ProducePFCalibrationObject",
-  write = cms.untracked.bool(True),
+  write = cms.untracked.bool(False),
   toWrite = cms.VPSet(
             cms.PSet(fType      = cms.untracked.string("PFfa_BARREL"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
@@ -127,7 +127,7 @@ process.mywriter = cms.EDAnalyzer(
             ),
 
 
-  read = cms.untracked.bool(False),
+  read = cms.untracked.bool(True),
   toRead = cms.untracked.vstring("PFfa_BARREL",
                                  "PFfb_BARREL",
                                  "PFfc_BARREL",
@@ -171,7 +171,7 @@ CondDBCommon.connect = "sqlite_file:PFCalibration.db"
 process.PoolDBOutputService = cms.Service("PoolDBOutputService",
                                   CondDBCommon,
                                   toPut = cms.VPSet(cms.PSet(record = cms.string('PFCalibrationRcd'),
-                                                             tag = cms.string('PFCalibration_v7_mc'),
+                                                             tag = cms.string('PFCalibration_v9_mc'),
                                                              timetype   = cms.untracked.string('runnumber')
                                                              )
                                                              ),
@@ -183,7 +183,7 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 # process.GlobalTag.globaltag = '90X_upgrade2017_realistic_v20'
 #process.GlobalTag.connect   = 'sqlite_file:/afs/cern.ch/user/c/cerminar/public/Alca/GlobalTag/GR_R_311_V2.db'
-process.GlobalTag.globaltag = '100X_upgrade2018_realistic_v10'
+process.GlobalTag.globaltag = '103X_upgrade2018_realistic_v8'
 
 # process.GlobalTag.toGet = cms.VPSet(
 #     cms.PSet(record = cms.string("PFCalibrationRcd"),
