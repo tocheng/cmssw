@@ -23,7 +23,7 @@ process.mywriter = cms.EDAnalyzer(
             cms.PSet(fType      = cms.untracked.string("PFfa_BARREL"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(-13.9219, 14.9124, 5.38578, 0.861981, -0.00759275, 0.00373563, -1.17946, -1.69561, )
+                     parameters = cms.untracked.vdouble(-30.7141, 31.7583, 4.40594, 1.70914, 0.0613696, 0.000104857, -1.38927, -0.743082, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfb_BARREL"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
@@ -59,27 +59,27 @@ process.mywriter = cms.EDAnalyzer(
             cms.PSet(fType      = cms.untracked.string("PFfa_ENDCAP"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(0.962468, 11.9536, -27.7088, 0.755474, 0.0791012, 0.0011082, 0.158734, -2.1, )
+                     parameters = cms.untracked.vdouble(1.17227, 13.1489, -29.1672, 0.604223, 0.0426363, 3.30898e-15, 0.165293, -7.56786, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfb_ENDCAP"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(-0.629923, 2.59634, -2.27786, 1.20771, -1.59129, 0.0189607, 0.270027, -2.30372, )
+                     parameters = cms.untracked.vdouble(-0.974251, 1.61733, 0.0629183, 7.78495, -0.774289, 7.81399e-05, 0.139116, -4.25551, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfc_ENDCAP"),
                      formula    = cms.untracked.string("[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(1.83168, 1.41883, -5.50085, 29.2208, 0.923959, 0.268974, 1.37756, -0.901421, )
+                     parameters = cms.untracked.vdouble(1.01863, 1.29787, -3.97293, 21.7805, 0.810195, 0.234134, 1.42226, -0.0997326, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfaEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[0]+[1]*exp(-x/[2])"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(384.307, -384.305, 2.16374e+08, )
+                     parameters = cms.untracked.vdouble(0.0112692, -2.68063, 2.90973, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfbEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[0]+[1]*exp(-x/[2])"),
                      limits     = cms.untracked.vdouble(1., 1000.),
-                     parameters = cms.untracked.vdouble(0.0120097, -0.131464, 57.1104, )
+                     parameters = cms.untracked.vdouble(-0.0192991, -0.265, 80.5502, )
                     ),
 
             cms.PSet(fType      = cms.untracked.string("PFfaEta_ENDCAPH"),
@@ -95,32 +95,32 @@ process.mywriter = cms.EDAnalyzer(
 #########################################################################################################
             cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(0, 2, 0, 1, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(0, 0, 0.05, 0, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(1.5, 4, 1.1, 1, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(0, 2, 0, 1, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(0, 0, 0, 0, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
-                     limits     = cms.untracked.vdouble(1., 1000.),
+                     limits     = cms.untracked.vdouble(0., 1000.),
                      parameters = cms.untracked.vdouble(1.5, 2, 0.6, 1, )
                     ),
             
@@ -185,10 +185,10 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 #process.GlobalTag.connect   = 'sqlite_file:/afs/cern.ch/user/c/cerminar/public/Alca/GlobalTag/GR_R_311_V2.db'
 process.GlobalTag.globaltag = '103X_upgrade2018_realistic_v8'
 
-# process.GlobalTag.toGet = cms.VPSet(
-#     cms.PSet(record = cms.string("PFCalibrationRcd"),
-#              tag = cms.string("PFCalibration_v7_mc"),
-#              connect = cms.string("sqlite_file:PFCalibration.db")
-#              #connect = cms.untracked.string("sqlite_file:PFCalibration.db")
-#              )
-#     )
+process.GlobalTag.toGet = cms.VPSet(
+    cms.PSet(record = cms.string("PFCalibrationRcd"),
+             tag = cms.string("PFCalibration_v9_mc"),
+             connect = cms.string("sqlite_file:PFCalibration.db")
+             #connect = cms.untracked.string("sqlite_file:PFCalibration.db")
+             )
+    )
