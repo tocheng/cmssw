@@ -171,7 +171,7 @@ CondDBCommon.connect = "sqlite_file:PFCalibration.db"
 process.PoolDBOutputService = cms.Service("PoolDBOutputService",
                                   CondDBCommon,
                                   toPut = cms.VPSet(cms.PSet(record = cms.string('PFCalibrationRcd'),
-                                                             tag = cms.string('PFCalibration_v9_mc'),
+                                                             tag = cms.string('PFCalibration_v10_mc'),
                                                              timetype   = cms.untracked.string('runnumber')
                                                              )
                                                              ),
@@ -187,7 +187,7 @@ process.GlobalTag.globaltag = '103X_upgrade2018_realistic_v8'
 
 process.GlobalTag.toGet = cms.VPSet(
     cms.PSet(record = cms.string("PFCalibrationRcd"),
-             tag = cms.string("PFCalibration_v9_mc"),
+             tag = cms.string("PFCalibration_v10_mc"),
              connect = cms.string("sqlite_file:PFCalibration.db")
              #connect = cms.untracked.string("sqlite_file:PFCalibration.db")
              )

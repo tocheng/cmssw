@@ -30,8 +30,8 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   threshE = 3.5;
   threshH = 2.5;
 
-  //calibChrisClean.C calibration parameters shubham May 01, 2017
-  //calibChrisClean.C calibration parameters bhumika Nov, 2018
+
+ //calibChrisClean.C calibration parameters bhumika Nov, 2018
   faBarrel = std::make_unique<TF1>("faBarrel","[0]+((([1]+([2]/sqrt(x)))*exp(-(x^[6]/[3])))-([4]*exp(-(x^[7]/[5]))))",1.,1000.);
   faBarrel->SetParameter(0,-30.7141);
   faBarrel->SetParameter(1,31.7583);
@@ -123,7 +123,7 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   fbEtaEndcapH->SetParameter(3,0.303578);
   fbEtaEndcapH->SetParameter(4,-104.367);
 
-  //changes made by Bhumika on 2 august 2018
+  //added by Bhumika on 2 august 2018
 
   fcEtaBarrelH = std::make_unique<TF1>("fcEtaBarrelH","[3]*((x-[0])^[1])+[2]",0.,1000.);
   fcEtaBarrelH->SetParameter(0,0);
@@ -161,8 +161,8 @@ PFEnergyCalibration::initializeCalibrationFunctions() {
   fdEtaEndcapEH->SetParameter(2,0.6);
   fdEtaEndcapEH->SetParameter(3,1.0);
   
-  //  cout<<"Payloads from constructor";
-//
+
+
 }
 
 void 
@@ -204,8 +204,8 @@ PFEnergyCalibration::energyEmHad(double t, double& e, double&h, double eta, doub
     } else {
       etaCorrE = 1.0 + aEtaBarrelH(t) + 1.3*bEtaBarrelH(t)*cEtaBarrelH(absEta);
       etaCorrH = 1.0 + aEtaBarrelH(t) + bEtaBarrelH(t)*cEtaBarrelH(absEta);
-      // etaCorrE = 1.0 + aEtaBarrelH(t) + 1.3*bEtaBarrelH(t)*absEta*absEta; 
-      // etaCorrH = 1.0 + aEtaBarrelH(t) + bEtaBarrelH(t)*absEta*absEta;
+
+
     }
     if ( e > 0. && thresh > 0. ) 
       e = h > 0. ? threshE-threshH + etaCorrE * a * e : threshE + etaCorrE * a * e;
@@ -240,13 +240,13 @@ PFEnergyCalibration::energyEmHad(double t, double& e, double&h, double eta, doub
         etaCorrE = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*cEtaEndcapEH(absEta);
       }
       else {
-        etaPow = dEta * dEta;
+
         etaCorrE = 1. + aEtaEndcapEH(t) + 1.3*bEtaEndcapEH(t)*dEtaEndcapEH(absEta);
       }
-      etaPow = dEta * dEta * dEta * dEta;
-      etaCorrH = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*(0.04 + etaPow);
+
+        etaCorrH = 1. + aEtaEndcapEH(t) + bEtaEndcapEH(t)*(0.04 + etaPow);
     } else {
-      etaCorrE = 1. + aEtaEndcapH(t) + 1.3*bEtaEndcapH(t)*(0.04 + etaPow);
+      etaCorrE = 1.;
       if(absEta<2.5) {
         etaCorrH = 1. + aEtaEndcapH(t) + bEtaEndcapH(t)*cEtaEndcapH(absEta);
       }
@@ -519,9 +519,10 @@ PFEnergyCalibration::cEtaEndcapH(double x) const {
     point.insert(BinningVariables::JetEt, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_ENDCAPH,point); 
     
-  } else  
+  } else{  
 
     return fcEtaEndcapH->Eval(x); 
+  }
 }
 
 double 
@@ -531,9 +532,10 @@ PFEnergyCalibration::dEtaEndcapH(double x) const {
     point.insert(BinningVariables::JetEt, x);
     return pfCalibrations->getResult(PerformanceResult::PFfdEta_ENDCAPH,point); 
     
-  } else  
+  } else{ 
 
     return fdEtaEndcapH->Eval(x); 
+  }
 }
 
 double 
@@ -543,9 +545,10 @@ PFEnergyCalibration::cEtaBarrelEH(double x) const {
     point.insert(BinningVariables::JetEt, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_BARRELEH,point); 
     
-  } else  
+  } else{  
 
     return fcEtaBarrelEH->Eval(x); 
+  }
 }
 
 double 
@@ -555,9 +558,10 @@ PFEnergyCalibration::cEtaEndcapEH(double x) const {
     point.insert(BinningVariables::JetEt, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_ENDCAPEH,point); 
     
-  } else  
+  } else{  
 
     return fcEtaEndcapEH->Eval(x); 
+  }
 }
 
 double 
@@ -567,9 +571,10 @@ PFEnergyCalibration::dEtaEndcapEH(double x) const {
     point.insert(BinningVariables::JetEt, x);
     return pfCalibrations->getResult(PerformanceResult::PFfdEta_ENDCAPH,point); 
     
-  } else  
+  } else{  
 
     return fdEtaEndcapEH->Eval(x); 
+  }
 }
 //
 double
@@ -654,7 +659,7 @@ std::ostream& operator<<(std::ostream& out,
       {"PFfdEta_ENDCAPH", PerformanceResult::PFfdEta_ENDCAPH},
       {"PFfcEta_BARRELEH", PerformanceResult::PFfcEta_BARRELEH},
       {"PFfcEta_ENDCAPEH", PerformanceResult::PFfcEta_ENDCAPEH},
-      {"PFfdEta_ENDCAPEH", PerformanceResult::PFfcEta_ENDCAPEH}
+      {"PFfdEta_ENDCAPEH", PerformanceResult::PFfdEta_ENDCAPEH}
 
     };
 
