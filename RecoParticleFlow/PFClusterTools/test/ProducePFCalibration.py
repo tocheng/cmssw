@@ -106,7 +106,7 @@ process.mywriter = cms.EDAnalyzer(
             cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(1.5, 4, 1.1, 1, )
+                     parameters = cms.untracked.vdouble(1.5, 4, -1.1, 1, )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
