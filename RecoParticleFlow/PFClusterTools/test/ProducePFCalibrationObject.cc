@@ -20,7 +20,7 @@
 
 
 #include "TF1.h"
-
+#include <string>
 
 using namespace std;
 using namespace edm;
@@ -92,8 +92,13 @@ void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventS
     vector<PerformanceResult::ResultType> resToWrite;
     vector<BinningVariables::BinningVariablesType> binsToWrite;
     binsToWrite.push_back(BinningVariables::JetEt);
+    binsToWrite.push_back(BinningVariables::JetAbsEta);
 
-
+    pair<float, float> limits;
+    limits = make_pair(1.0,1000.0);
+    limitsToWrite.push_back(limits);
+    limits = make_pair(0.0,1000.0);
+    limitsToWrite.push_back(limits);
 
     // loop over all the pSets for the TF1 that we want to write to DB
     for(vector<ParameterSet>::const_iterator fSetup = fToWrite.begin();
@@ -104,8 +109,6 @@ void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventS
       string fType = (*fSetup).getUntrackedParameter<string>("fType");
       //FIXME: should check that the give type exists
       string formula = (*fSetup).getUntrackedParameter<string>("formula");
-      pair<float, float> limits = make_pair((*fSetup).getUntrackedParameter<vector<double> >("limits")[0],
-					    (*fSetup).getUntrackedParameter<vector<double> >("limits")[1]);
       vector<double> parameters = (*fSetup).getUntrackedParameter<vector<double> >("parameters");
     
       TF1 *function = new TF1(fType.c_str(),  formula.c_str(), limits.first, limits.second);
@@ -114,7 +117,6 @@ void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventS
       }
 
       // write them in the containers for the storage
-      limitsToWrite.push_back(limits);
       formulasToWrite.push_back(string(function->GetExpFormula("p").Data()));
       resToWrite.push_back(functType[fType]);
 
@@ -154,22 +156,45 @@ void ProducePFCalibrationObject::beginRun(const edm::Run& run, const edm::EventS
 	name != fToRead.end(); ++name) {
 
       
+      std::string name_ = (std::string)*name;
+      std::size_t f1 = name_.find("fcEta");
+      std::size_t f2 = name_.find("fdEta");
+      std::size_t f3 = name_.find("PFfcEta_BARRELH");
 
       cout << "Function: " << *name << endl;
       PerformanceResult::ResultType fType = functType[*name];
-      pfCalibrations->printFormula(fType);
+      if((f3 != std::string::npos)) {
+	pfCalibrations->printFormula(PerformanceResult::PFfcEta_BARRELH);
+	cout<<"YOLO"<<endl;
+      }
+      else {
+	pfCalibrations->printFormula(fType);
+      }
+      if((f1 != std::string::npos) || (f2 != std::string::npos)) {
+	// evaluate it @ 10 GeV
+	float eta = 1.0;	
+	BinningPointByMap point;
+	point.insert(BinningVariables::JetAbsEta, eta);
+	if(pfCalibrations->isInPayload(fType, point)) {
+	  float value = pfCalibrations->getResult(fType, point);
+	  cout << "   Eta before:: " << eta <<" ,after: " << value << endl;
 
-      // evaluate it @ 10 GeV
-      float energy = 10.;
-      
-      BinningPointByMap point;
-      point.insert(BinningVariables::JetEt, energy);
+	} else cout <<  "outside limits!" << endl;
 
-      if(pfCalibrations->isInPayload(fType, point)) {
-	float value = pfCalibrations->getResult(fType, point);
-	cout << "   Energy before:: " << energy << " after: " << value << endl;
-      } else cout <<  "outside limits!" << endl;
 
+      }
+      else {
+	// evaluate it @ 10 GeV
+	float energy = 10.;
+	
+	BinningPointByMap point;
+	point.insert(BinningVariables::JetEt, energy);
+	
+	if(pfCalibrations->isInPayload(fType, point)) {
+	  float value = pfCalibrations->getResult(fType, point);
+	  cout << "   Energy before:: " << energy << " after: " << value << endl;
+	} else cout <<  "outside limits!" << endl;
+      }
     }
   }
   ///  if(pfCalibrationFormulas->isInPayload(etaBin, point)) {

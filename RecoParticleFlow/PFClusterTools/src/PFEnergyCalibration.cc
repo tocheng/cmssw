@@ -505,7 +505,7 @@ double
 PFEnergyCalibration::cEtaBarrelH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_BARRELH,point); 
     
   } else { 
@@ -516,7 +516,7 @@ double
 PFEnergyCalibration::cEtaEndcapH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_ENDCAPH,point); 
     
   } else{  
@@ -529,7 +529,7 @@ double
 PFEnergyCalibration::dEtaEndcapH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfdEta_ENDCAPH,point); 
     
   } else{ 
@@ -542,7 +542,7 @@ double
 PFEnergyCalibration::cEtaBarrelEH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_BARRELEH,point); 
     
   } else{  
@@ -555,7 +555,7 @@ double
 PFEnergyCalibration::cEtaEndcapEH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfcEta_ENDCAPEH,point); 
     
   } else{  
@@ -568,7 +568,7 @@ double
 PFEnergyCalibration::dEtaEndcapEH(double x) const { 
   if ( pfCalibrations ) { 
     BinningPointByMap point;
-    point.insert(BinningVariables::JetEt, x);
+    point.insert(BinningVariables::JetAbsEta, x);
     return pfCalibrations->getResult(PerformanceResult::PFfdEta_ENDCAPH,point); 
     
   } else{  

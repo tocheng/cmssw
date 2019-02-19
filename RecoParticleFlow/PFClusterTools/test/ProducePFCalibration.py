@@ -96,32 +96,32 @@ process.mywriter = cms.EDAnalyzer(
             cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(0, 2, 0, 1, )
+                     parameters = cms.untracked.vdouble(0., 2., 0., 1., )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(0, 0, 0.05, 0, )
+                     parameters = cms.untracked.vdouble(0., 0., 0.05, 0., )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(1.5, 4, -1.1, 1, )
+                     parameters = cms.untracked.vdouble(1.5, 4., -1.1, 1., )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_BARRELEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(0, 2, 0, 1, )
+                     parameters = cms.untracked.vdouble(0., 2., 0., 1., )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfcEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(0, 0, 0, 0, )
+                     parameters = cms.untracked.vdouble(0., 0., 0., 0., )
                     ),
             cms.PSet(fType      = cms.untracked.string("PFfdEta_ENDCAPEH"),
                      formula    = cms.untracked.string("[3]*((x-[0])^[1])+[2]"),
                      limits     = cms.untracked.vdouble(0., 1000.),
-                     parameters = cms.untracked.vdouble(1.5, 2, 0.6, 1, )
+                     parameters = cms.untracked.vdouble(1.5, 2., 0.6, 1., )
                     ),
             
             ),
@@ -168,6 +168,7 @@ process.p = cms.Path(process.mywriter)
 from CondCore.DBCommon.CondDBCommon_cfi import CondDBCommon
 CondDBCommon.connect = "sqlite_file:PFCalibration.db"
 
+
 process.PoolDBOutputService = cms.Service("PoolDBOutputService",
                                   CondDBCommon,
                                   toPut = cms.VPSet(cms.PSet(record = cms.string('PFCalibrationRcd'),
@@ -181,7 +182,7 @@ process.PoolDBOutputService = cms.Service("PoolDBOutputService",
                                   )
 
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
-# process.GlobalTag.globaltag = '90X_upgrade2017_realistic_v20'
+#process.GlobalTag.globaltag = '90X_upgrade2017_realistic_v20'
 #process.GlobalTag.connect   = 'sqlite_file:/afs/cern.ch/user/c/cerminar/public/Alca/GlobalTag/GR_R_311_V2.db'
 process.GlobalTag.globaltag = '103X_upgrade2018_realistic_v8'
 

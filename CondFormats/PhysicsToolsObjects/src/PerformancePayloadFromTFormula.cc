@@ -44,10 +44,12 @@ float PerformancePayloadFromTFormula::getResult(PerformanceResult::ResultType r 
   // sorry, TFormulas just work up to dimension==4
   Double_t values[4];
   int i=0;
-  for (std::vector<BinningVariables::BinningVariablesType>::const_iterator it = t.begin(); it != t.end();++it, ++i){
+  for (std::vector<BinningVariables::BinningVariablesType>::const_iterator it = t.begin(); it != t.end();++it){
+    if (!   p.isKeyAvailable(*it)) continue;
     values[i] = p.value(*it);
+    ++i;
   }
-  //
+
   return formula->EvalPar(values);
 }
 
@@ -55,21 +57,27 @@ bool PerformancePayloadFromTFormula::isOk(const BinningPointByMap& _p) const {
   BinningPointByMap p = _p;
   std::vector<BinningVariables::BinningVariablesType> t = myBinning();
 
+  bool found_ = false;
   for (std::vector<BinningVariables::BinningVariablesType>::const_iterator it = t.begin(); it != t.end();++it){
-    if (!   p.isKeyAvailable(*it)) return false;
+    if (!   p.isKeyAvailable(*it)) continue;
+    found_ = true;
     float v = p.value(*it);
     int pos = limitPos(*it);
     std::pair<float, float> limits = (pl.limits())[pos];
     if (v<limits.first || v>limits.second) return false;
   }
+  if(!found_) return false;
   return true;
 }
 
 bool PerformancePayloadFromTFormula::isInPayload(PerformanceResult::ResultType res,const BinningPointByMap& point) const {
   // first, let's see if it is available at all
-  if (resultPos(res) == PerformancePayloadFromTFormula::InvalidPos) return false;
-
-  if ( ! isOk(point)) return false;
+  if (resultPos(res) == PerformancePayloadFromTFormula::InvalidPos) {
+  return false;
+  }
+  if ( ! isOk(point)){ 
+    return false; 
+  }
   return true;
 }
 
