@@ -86,13 +86,32 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
   emptyRun = true;
   
   // pixel substructure
-  substructures.push_back("BpixLYR1");
-  substructures.push_back("BpixLYR2");
-  substructures.push_back("BpixLYR3");
-  substructures.push_back("BpixLYR4");
+  substructures.clear();
+  for(int ly = 1; ly<=4; ly++){
+      for (int signed_mod = -4; signed_mod<=4; signed_mod++){
+          if(signed_mod==0) continue;
+          std::string substructure = "BpixLYR";
+          std::string layer = std::to_string(ly);
+          substructure += layer;
+          substructure += "MOD";
+          std::string MOD = std::to_string(signed_mod);
+          substructure += MOD;          
+          substructures.push_back(substructure); 
+      }
+  }
   ///
-  substructures.push_back("FpixRNG1");
-  substructures.push_back("FpixRNG2");
+  for(int rng = 1; rng<=2; rng++){
+      for (int signed_disk = -3; signed_disk<=3; signed_disk++){
+          if(signed_disk==0) continue;
+          std::string substructure = "FpixRNG";
+          std::string ring = std::to_string(rng);
+          substructure += ring;
+          substructure += "Disk";
+          std::string Disk = std::to_string(signed_disk);
+          substructure += Disk;
+          substructures.push_back(substructure);
+      }
+  } 
 
   p001.clear(); p005.clear();
   p01.clear();  p05.clear();
@@ -1064,12 +1083,24 @@ std::string SiPixelStatusHarvester::substructure(int detid){
          std::string L = std::to_string(layer);
          substructure = "BpixLYR";
          substructure += L;
+
+         substructure += "MOD"; 
+         int signed_module = coord_.signed_module(DetId(detid));
+         std::string MOD = std::to_string(signed_module);
+         substructure += MOD;
+    
        }  
        else{
          substructure = "FpixRNG";
          int ring  = coord_.ring(DetId(detid));
          std::string R = std::to_string(ring);
          substructure += R; 
+
+         substructure += "Disk";
+         int signed_disk = coord_.signed_disk(DetId(detid));
+         std::string Disk = std::to_string(signed_disk);
+         substructure += Disk;  
+
        }
 
        return substructure;
