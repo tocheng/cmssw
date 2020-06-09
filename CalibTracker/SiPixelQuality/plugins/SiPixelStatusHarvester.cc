@@ -167,14 +167,6 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
          //instLumi
          //digiTrees[substructures[s]]->Branch("instLumi",&instLumis);
 
-         p001[substructures[s]] = new TH1F(subTs+"p001","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",300,-6,0);
-         p005[substructures[s]] = new TH1F(subTs+"p005","Digi Loss Fraction;log_{10}(frac_{Digioss});N_{raw IOVs}",300,-6,0);
-         p01[substructures[s]]  = new TH1F(subTs+"p01","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",300,-6,0);
-         p05[substructures[s]]  = new TH1F(subTs+"p05","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",300,-6,0);
-         p1[substructures[s]]   = new TH1F(subTs+"p1","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",300,-6,0);
-         p2[substructures[s]]   = new TH1F(subTs+"p2","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",300,-6,0);
-         p5[substructures[s]]   = new TH1F(subTs+"p5","Digi Loss Fraction;log_{10}(frac_{DigiLoss});N_{raw IOVs}",350,-6,0);
-
   }
 
 }
@@ -195,14 +187,6 @@ void SiPixelStatusHarvester::endJob() {
 
        for(unsigned int s = 0; s<substructures.size(); s++){
 
-           p001[substructures[s]]->Write();
-           p005[substructures[s]]->Write();
-           p01[substructures[s]]->Write();
-           p05[substructures[s]]->Write();
-           p1[substructures[s]]->Write();
-           p2[substructures[s]]->Write();
-           p5[substructures[s]]->Write();
-
            digiTrees[substructures[s]]->Write();
 
        }
@@ -210,10 +194,6 @@ void SiPixelStatusHarvester::endJob() {
        histoFile->Close();
        
        digiTrees.clear();
-
-       p001.clear(); p005.clear(); 
-       p01.clear();  p05.clear(); 
-       p1.clear();   p2.clear();  p5.clear(); 
 
     }
 
@@ -907,34 +887,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
               _interval = interval;
 
               digiTrees[substructures[s]]->Fill();
-
-              if(_digiLossp001>0){
-                p001[substructures[s]]->Fill(log(1.0*_digiLossp001/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp005>0){
-                p005[substructures[s]]->Fill(log(1.0*_digiLossp005/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp01>0){
-                p01[substructures[s]]->Fill(log(1.0*_digiLossp01/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp05>0){
-                p05[substructures[s]]->Fill(log(1.0*_digiLossp05/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp1>0){
-                p1[substructures[s]]->Fill(log(1.0*_digiLossp1/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp2>0){
-                p2[substructures[s]]->Fill(log(1.0*_digiLossp2/_digiTotal)/log(10));
-              }
-
-              if(_digiLossp5>0){
-                p5[substructures[s]]->Fill(log(1.0*_digiLossp5/_digiTotal)/log(10));
-              }
 
            } // loop over different pixel substructures
 
