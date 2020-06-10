@@ -7,6 +7,19 @@
 <use   name="Geometry/Records"/>
 <use   name="Geometry/TrackerGeometryBuilder"/>
 
+<library file="PixelBaryCentreAnalyzer.cc" name="PixelBaryCentreAnalyzer">
+  <use name="CondCore/Utilities"/>
+  <use name="CondCore/CondDB"/>
+  <use name="CondFormats/Common"/>
+  <use name="CondFormats/Alignment"/>
+  <use name="CommonTools/TrackerMap"/>
+  <use name="Alignment/CommonAlignment"/>
+  <use name="CalibTracker/StandaloneTrackerTopology"/>
+  <use name="DataFormats/SiPixelDetId"/>
+  <use name="DQM/SiPixelPhase1Common"/>
+  <flags EDM_PLUGIN="1"/>
+</library>
+
 <library   name="AlignmentTrackerAlignment_test" file="*.cpp">
   <use   name="Geometry/CommonDetUnit"/>
   <use   name="CondCore/DBOutputService"/>
