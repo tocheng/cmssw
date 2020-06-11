@@ -38,6 +38,9 @@
 #include "DataFormats/TrackerCommon/interface/TrackerTopology.h"
 #include "Geometry/Records/interface/TrackerTopologyRcd.h"
 
+// pixel quality
+#include "CondFormats/SiPixelObjects/interface/SiPixelQuality.h"
+#include "CondFormats/DataRecord/interface/SiPixelQualityFromDbRcd.h"
 // global postion
 #include "CondFormats/Alignment/interface/DetectorGlobalPosition.h"
 #include "CondFormats/AlignmentRecord/interface/GlobalPositionRcd.h"
@@ -77,6 +80,8 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
       void initBC();
       void initBS();
 
+      bool usePixelQuality_; 
+
       SiPixelCoordinates coord_;
 
       int   run_;
@@ -115,10 +120,10 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
 // constructors and destructor
 //
 PixelBaryCentreAnalyzer::PixelBaryCentreAnalyzer(const edm::ParameterSet& iConfig) :
+  usePixelQuality_(iConfig.getUntrackedParameter<bool>("usePixelQuality")),
   bctree_(nullptr)
 {
   usesResource("TFileService");
-  std::string fileName(iConfig.getUntrackedParameter<std::string>("rawFileName"));
 }
 
 
@@ -137,7 +142,7 @@ PixelBaryCentreAnalyzer::~PixelBaryCentreAnalyzer()
 
 void PixelBaryCentreAnalyzer::initBS(){
 
-  float dummy_float = 9999.0;
+  float dummy_float = 999999.0;
 
   BSx0_  = dummy_float;	  
   BSy0_  = dummy_float;	  
@@ -147,7 +152,7 @@ void PixelBaryCentreAnalyzer::initBS(){
 
 void PixelBaryCentreAnalyzer::initBC(){
 
-  float dummy_float = 9999.0;
+  float dummy_float = 999900.0;
 
   PIXx0_ = dummy_float; 
   PIXy0_ = dummy_float; 
@@ -171,16 +176,21 @@ void PixelBaryCentreAnalyzer::initBC(){
 void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
 
+   if (!watcherBS_.check(iSetup) && !watcherTkAlign_.check(iSetup)) return; 
+
    // Pixel Phase-1 helper class
    coord_.init(iSetup);
-
-   if (!watcherBS_.check(iSetup) && !watcherTkAlign_.check(iSetup)) return; 
 
    run_  = iEvent.id().run();
    ls_   = iEvent.id().luminosityBlock();
 
    if (watcherTkAlign_.check(iSetup)) { // check for new IOV for TKAlign
      
+     // pixel quality
+     edm::ESHandle<SiPixelQuality> qualityInfo;
+     iSetup.get<SiPixelQualityFromDbRcd>().get( qualityInfo );
+     const SiPixelQuality* badPixelInfo_ = qualityInfo.product();
+
      PixelBaryCentreAnalyzer::initBC();     
 
      edm::ESHandle<Alignments> globalAlignments;
@@ -209,6 +219,9 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
      // loop over tracker module
      for (const auto &ali : tkAlignments) {
+
+        // remove bad module
+        if(usePixelQuality_ && badPixelInfo_->IsModuleBad(DetId(ali.rawId())) ) continue;
 
         TVector3 ali_translation(ali.translation().x(),ali.translation().y(),ali.translation().z());
 
@@ -299,6 +312,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
    } // check for new IOV for TKAlign
 
+   // beamspot
    if ( watcherBS_.check(iSetup) ) {
 
      PixelBaryCentreAnalyzer::initBS();

@@ -11,9 +11,9 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000000                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = 100#000000                            # do not clog output with IO
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )       # large number of events is needed since we probe 5000LS for run (see below)
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -22,7 +22,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100000) )   
 #DCSJson='/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/DCSOnly/json_DCSONLY.txt'
 
 process.source = cms.Source("EmptySource",
-                            firstRun = cms.untracked.uint32(294927),
+                            firstRun = cms.untracked.uint32(294929),
                             firstLuminosityBlock = cms.untracked.uint32(1),           # probe one LS after the other
                             numberEventsInLuminosityBlock = cms.untracked.uint32(1),  # probe one event per LS
                             numberEventsInRun = cms.untracked.uint32(1),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
@@ -32,9 +32,8 @@ process.source = cms.Source("EmptySource",
 # Connect to conditions DB
 ####################################################################
 
-# either from Global Tag
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data")
+process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data_promptlike")
 
 process.GlobalTag.toGet.append(
   cms.PSet(
@@ -59,15 +58,21 @@ process.GlobalTag.toGet.append(
 # Load and configure analyzer
 ####################################################################
 process.PixelBaryCentreAnalyzer = cms.EDAnalyzer("PixelBaryCentreAnalyzer",
-                  rawFileName = cms.untracked.string('prompt_BeamSpotObjects_PCL_byLumi_v0_prompt.txt')
+                    usePixelQuality = cms.untracked.bool(False)
                   )
+
+process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentreAnalyzer",
+                    usePixelQuality = cms.untracked.bool(True)
+                  )
+
+
 
 ####################################################################
 # Output file
 ####################################################################
 process.TFileService = cms.Service("TFileService",
-                                   fileName=cms.string("PixelBaryCentre_Prompt.root")
+                                   fileName=cms.string("PixelBaryCentre.root")
                                    ) 
 
 # Put module in path:
-process.p = cms.Path(process.PixelBaryCentreAnalyzer)
+process.p = cms.Path(process.PixelBaryCentreAnalyzer*process.PixelBaryCentreAnalyzerWithPixelQuality)
