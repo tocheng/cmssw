@@ -95,10 +95,26 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
       float BPIXx0_, BPIXy0_, BPIXz0_;
       float FPIXx0_, FPIXy0_, FPIXz0_;
 
-      std::vector<float> BPIXLY1x0_, BPIXLY1y0_, BPIXLY1z0_;
-      std::vector<float> BPIXLY2x0_, BPIXLY2y0_, BPIXLY2z0_;
-      std::vector<float> BPIXLY3x0_, BPIXLY3y0_, BPIXLY3z0_;
-      std::vector<float> BPIXLY4x0_, BPIXLY4y0_, BPIXLY4z0_;
+      std::vector<float> vBPIXLY1x0_, vBPIXLY1y0_, vBPIXLY1z0_;
+      std::vector<float> vBPIXLY2x0_, vBPIXLY2y0_, vBPIXLY2z0_;
+      std::vector<float> vBPIXLY3x0_, vBPIXLY3y0_, vBPIXLY3z0_;
+      std::vector<float> vBPIXLY4x0_, vBPIXLY4y0_, vBPIXLY4z0_;
+
+      float BPIXLY1x0_, BPIXLY1y0_, BPIXLY1z0_;
+      float BPIXLY1_Flippedx0_, BPIXLY1_Flippedy0_, BPIXLY1_Flippedz0_;
+      float BPIXLY1_NonFlippedx0_, BPIXLY1_NonFlippedy0_, BPIXLY1_NonFlippedz0_;
+
+      float BPIXLY2x0_, BPIXLY2y0_, BPIXLY2z0_;
+      float BPIXLY2_Flippedx0_, BPIXLY2_Flippedy0_, BPIXLY2_Flippedz0_;
+      float BPIXLY2_NonFlippedx0_, BPIXLY2_NonFlippedy0_, BPIXLY2_NonFlippedz0_;
+
+      float BPIXLY3x0_, BPIXLY3y0_, BPIXLY3z0_;
+      float BPIXLY3_Flippedx0_, BPIXLY3_Flippedy0_, BPIXLY3_Flippedz0_;
+      float BPIXLY3_NonFlippedx0_, BPIXLY3_NonFlippedy0_, BPIXLY3_NonFlippedz0_;
+
+      float BPIXLY4x0_, BPIXLY4y0_, BPIXLY4z0_;
+      float BPIXLY4_Flippedx0_, BPIXLY4_Flippedy0_, BPIXLY4_Flippedz0_;
+      float BPIXLY4_NonFlippedx0_, BPIXLY4_NonFlippedy0_, BPIXLY4_NonFlippedz0_;
 
       edm::Service<TFileService> tFileService; 
       TTree * bctree_;
@@ -164,10 +180,10 @@ void PixelBaryCentreAnalyzer::initBC(){
   FPIXy0_ = dummy_float; 
   FPIXz0_ = dummy_float;
 
-  BPIXLY1x0_.clear(); BPIXLY1y0_.clear(); BPIXLY1z0_.clear();
-  BPIXLY2x0_.clear(); BPIXLY2y0_.clear(); BPIXLY2z0_.clear();
-  BPIXLY3x0_.clear(); BPIXLY3y0_.clear(); BPIXLY3z0_.clear();
-  BPIXLY4x0_.clear(); BPIXLY4y0_.clear(); BPIXLY4z0_.clear();
+  vBPIXLY1x0_.clear(); vBPIXLY1y0_.clear(); vBPIXLY1z0_.clear();
+  vBPIXLY2x0_.clear(); vBPIXLY2y0_.clear(); vBPIXLY2z0_.clear();
+  vBPIXLY3x0_.clear(); vBPIXLY3y0_.clear(); vBPIXLY3z0_.clear();
+  vBPIXLY4x0_.clear(); vBPIXLY4y0_.clear(); vBPIXLY4z0_.clear();
 
 }
 
@@ -198,8 +214,8 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      std::unique_ptr<const Alignments> globalPositions = std::make_unique<Alignments>(*globalAlignments);
      const AlignTransform& globalCoordinates = align::DetectorGlobalPosition(*globalPositions, DetId(DetId::Tracker));
      TVector3 globalTkPosition(globalCoordinates.translation().x(), 
-                             globalCoordinates.translation().y(),
-                             globalCoordinates.translation().z());
+                               globalCoordinates.translation().y(),
+                               globalCoordinates.translation().z());
 
      //std::cout << globalTkPosition.X() <<" "<<globalTkPosition.Y()<<" "<<globalTkPosition.Z()<<std::endl;
 
@@ -208,13 +224,15 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      iSetup.get<TrackerAlignmentRcd>().get(alignments);
      std::vector<AlignTransform> tkAlignments = alignments->m_align;
 
-     std::map<int, float> nmodules_L1, nmodules_L2, nmodules_L3, nmodules_L4;
-     std::map<int, TVector3> barycenter_L1, barycenter_L2, barycenter_L3, barycenter_L4;
+     // per-ladder barycentre
 
-     TVector3 barycenter_BPIX;
+     std::map<int, std::map<int, float>> nmodules;
+     std::map<int, std::map<int, TVector3>> barycentre;
+
+     TVector3 barycentre_BPIX;
      float nmodules_BPIX(0.);
 
-     TVector3 barycenter_FPIX;
+     TVector3 barycentre_FPIX;
      float nmodules_FPIX(0.);
 
      // loop over tracker module
@@ -229,85 +247,166 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
         // BPIX
         if (subid == PixelSubdetector::PixelBarrel){
            nmodules_BPIX += 1; 
-           barycenter_BPIX += ali_translation;
+           barycentre_BPIX += ali_translation;
            
            int layer  = coord_.layer( DetId(ali.rawId()) );
            int ladder = coord_.ladder( DetId(ali.rawId()) );
 
-           switch (layer) {
-             case 1:
-               nmodules_L1[ladder] += 1;
-               barycenter_L1[ladder] += ali_translation;
-               break;
-             case 2:
-               nmodules_L2[ladder] += 1;
-               barycenter_L2[ladder] += ali_translation;
-               break;
-             case 3:
-               nmodules_L3[ladder] += 1;
-               barycenter_L3[ladder] += ali_translation;
-               break;
-             case 4:
-               nmodules_L4[ladder] += 1;
-               barycenter_L4[ladder] += ali_translation;
-               break;
-             default:
-               edm::LogError("PixelBaryCentreAnalyzer") << "Unrecognized BPIX layer " << layer << std::endl;
-               break;
-           }  // switch on layer of BPIX
+           nmodules[layer][ladder] += 1;
+           barycentre[layer][ladder] += ali_translation;
 
         } // BPIX
 
         // FPIX
         if (subid == PixelSubdetector::PixelEndcap){
            nmodules_FPIX += 1; 
-           barycenter_FPIX += ali_translation;
+           barycentre_FPIX += ali_translation;
         } // FPIX
 
      }// loop over tracker module
 
-     TVector3 barycenter_PIX = barycenter_BPIX + barycenter_FPIX; 
+     //PIX
+     TVector3 barycentre_PIX = barycentre_BPIX + barycentre_FPIX; 
      float nmodules_PIX = nmodules_BPIX + nmodules_FPIX;
-     PIXx0_ = barycenter_PIX.X()/nmodules_PIX + globalTkPosition.X();
-     PIXy0_ = barycenter_PIX.Y()/nmodules_PIX + globalTkPosition.Y();
-     PIXz0_ = barycenter_PIX.Z()/nmodules_PIX + globalTkPosition.Z();
+     PIXx0_ = barycentre_PIX.X()/nmodules_PIX + globalTkPosition.X();
+     PIXy0_ = barycentre_PIX.Y()/nmodules_PIX + globalTkPosition.Y();
+     PIXz0_ = barycentre_PIX.Z()/nmodules_PIX + globalTkPosition.Z();
 
-     BPIXx0_ = barycenter_BPIX.X()/nmodules_BPIX + globalTkPosition.X();
-     BPIXy0_ = barycenter_BPIX.Y()/nmodules_BPIX + globalTkPosition.Y() ;
-     BPIXz0_ = barycenter_BPIX.Z()/nmodules_BPIX + globalTkPosition.Z();
+     //BPIX
+     BPIXx0_ = barycentre_BPIX.X()/nmodules_BPIX + globalTkPosition.X();
+     BPIXy0_ = barycentre_BPIX.Y()/nmodules_BPIX + globalTkPosition.Y() ;
+     BPIXz0_ = barycentre_BPIX.Z()/nmodules_BPIX + globalTkPosition.Z();
 
-     FPIXx0_ = barycenter_FPIX.X()/nmodules_FPIX + globalTkPosition.X();
-     FPIXy0_ = barycenter_FPIX.Y()/nmodules_FPIX + globalTkPosition.Y();
-     FPIXz0_ = barycenter_FPIX.Z()/nmodules_FPIX + globalTkPosition.Z();
+     //FPIX
+     FPIXx0_ = barycentre_FPIX.X()/nmodules_FPIX + globalTkPosition.X();
+     FPIXy0_ = barycentre_FPIX.Y()/nmodules_FPIX + globalTkPosition.Y();
+     FPIXz0_ = barycentre_FPIX.Z()/nmodules_FPIX + globalTkPosition.Z();
 
-     // barycentre per layer/ladder 
-     for (std::map<int, TVector3>::iterator it = barycenter_L1.begin(); it != barycenter_L1.end(); ++it) {
+     // BPix barycentre per-ladder per-layer
+     // !!! Based on assumption : each ladder has the same number of modules in the same layer
+     // inner =  flipped; outer = non-flipped
+     /*
+       // Phase 0: Outer ladders are odd for layer 1,3 and even for layer 2
+       // Phase 1: Outer ladders are odd for layer 4 and even for layer 1,2,3
+     */
+
+     BPIXLY1x0_ = 0; BPIXLY1x0_ = 0; BPIXLY1z0_ = 0;
+     BPIXLY1_Flippedx0_ = 0; BPIXLY1_Flippedx0_ = 0; BPIXLY1_Flippedz0_ = 0;
+     BPIXLY1_NonFlippedx0_ = 0; BPIXLY1_NonFlippedx0_ = 0; BPIXLY1_NonFlippedz0_ = 0;
+
+     std::map<int, TVector3> barycentre_L1 = barycentre[1];
+     for (std::map<int, TVector3>::iterator it = barycentre_L1.begin(); it != barycentre_L1.end(); ++it) {
          int ladder = it->first;
-         barycenter_L1[ladder] = (1/nmodules_L1[ladder])*it->second;
-         BPIXLY1x0_.push_back(barycenter_L1[ladder].X() + globalTkPosition.X());
-         BPIXLY1y0_.push_back(barycenter_L1[ladder].Y() + globalTkPosition.Y());
-         BPIXLY1z0_.push_back(barycenter_L1[ladder].Z() + globalTkPosition.Z());
+
+         barycentre_L1[ladder] = (1/nmodules[1][ladder])*it->second;
+
+         BPIXLY1x0_ += (barycentre_L1[ladder].X() + globalTkPosition.X())/barycentre_L1.size();
+         BPIXLY1y0_ += (barycentre_L1[ladder].Y() + globalTkPosition.Y())/barycentre_L1.size();
+         BPIXLY1z0_ += (barycentre_L1[ladder].Z() + globalTkPosition.Z())/barycentre_L1.size();
+
+         if(ladder%2) { // odd ladder = inner = flipped 
+              BPIXLY1_Flippedx0_ += 2*(barycentre_L1[ladder].X() + globalTkPosition.X())/barycentre_L1.size();
+              BPIXLY1_Flippedy0_ += 2*(barycentre_L1[ladder].Y() + globalTkPosition.Y())/barycentre_L1.size();
+              BPIXLY1_Flippedz0_ += 2*(barycentre_L1[ladder].Z() + globalTkPosition.Z())/barycentre_L1.size();
+         }
+         else { // even ladder = outer = non-flipped
+              BPIXLY1_NonFlippedx0_ += 2*(barycentre_L1[ladder].X() + globalTkPosition.X())/barycentre_L1.size();
+              BPIXLY1_NonFlippedy0_ += 2*(barycentre_L1[ladder].Y() + globalTkPosition.Y())/barycentre_L1.size();
+              BPIXLY1_NonFlippedz0_ += 2*(barycentre_L1[ladder].Z() + globalTkPosition.Z())/barycentre_L1.size();
+         }
+
+         vBPIXLY1x0_.push_back(barycentre_L1[ladder].X() + globalTkPosition.X());
+         vBPIXLY1y0_.push_back(barycentre_L1[ladder].Y() + globalTkPosition.Y());
+         vBPIXLY1z0_.push_back(barycentre_L1[ladder].Z() + globalTkPosition.Z());
      }
-     for (std::map<int, TVector3>::iterator it = barycenter_L2.begin(); it != barycenter_L2.end(); ++it) {
+
+
+     BPIXLY2x0_ = 0; BPIXLY2x0_ = 0; BPIXLY2z0_ = 0;
+     BPIXLY2_Flippedx0_ = 0; BPIXLY2_Flippedx0_ = 0; BPIXLY2_Flippedz0_ = 0;
+     BPIXLY2_NonFlippedx0_ = 0; BPIXLY2_NonFlippedx0_ = 0; BPIXLY2_NonFlippedz0_ = 0;
+
+     std::map<int, TVector3> barycentre_L2 = barycentre[2];
+     for (std::map<int, TVector3>::iterator it = barycentre_L2.begin(); it != barycentre_L2.end(); ++it) {
          int ladder = it->first;
-         barycenter_L2[ladder] = (1/nmodules_L2[ladder])*it->second;
-         BPIXLY2x0_.push_back(barycenter_L2[ladder].X() + globalTkPosition.X());
-         BPIXLY2y0_.push_back(barycenter_L2[ladder].Y() + globalTkPosition.Y());
-         BPIXLY2z0_.push_back(barycenter_L2[ladder].Z() + globalTkPosition.Z());
+         barycentre_L2[ladder] = (1/nmodules[2][ladder])*it->second;
+
+         BPIXLY2x0_ += (barycentre_L2[ladder].X() + globalTkPosition.X())/barycentre_L2.size();
+         BPIXLY2y0_ += (barycentre_L2[ladder].Y() + globalTkPosition.Y())/barycentre_L2.size();
+         BPIXLY2z0_ += (barycentre_L2[ladder].Z() + globalTkPosition.Z())/barycentre_L2.size();
+
+         if(ladder%2) { // odd ladder = inner = flipped
+              BPIXLY2_Flippedx0_ += 2*(barycentre_L2[ladder].X() + globalTkPosition.X())/barycentre_L2.size();
+              BPIXLY2_Flippedy0_ += 2*(barycentre_L2[ladder].Y() + globalTkPosition.Y())/barycentre_L2.size();
+              BPIXLY2_Flippedz0_ += 2*(barycentre_L2[ladder].Z() + globalTkPosition.Z())/barycentre_L2.size();
+         }
+         else { // even ladder = outer = non-flipped
+              BPIXLY2_NonFlippedx0_ += 2*(barycentre_L2[ladder].X() + globalTkPosition.X())/barycentre_L2.size();
+              BPIXLY2_NonFlippedy0_ += 2*(barycentre_L2[ladder].Y() + globalTkPosition.Y())/barycentre_L2.size();
+              BPIXLY2_NonFlippedz0_ += 2*(barycentre_L2[ladder].Z() + globalTkPosition.Z())/barycentre_L2.size();
+         }
+
+         vBPIXLY2x0_.push_back(barycentre_L2[ladder].X() + globalTkPosition.X());
+         vBPIXLY2y0_.push_back(barycentre_L2[ladder].Y() + globalTkPosition.Y());
+         vBPIXLY2z0_.push_back(barycentre_L2[ladder].Z() + globalTkPosition.Z());
      }
-     for (std::map<int, TVector3>::iterator it = barycenter_L3.begin(); it != barycenter_L3.end(); ++it) {
+
+
+     BPIXLY3x0_ = 0; BPIXLY3x0_ = 0; BPIXLY3z0_ = 0;
+     BPIXLY3_Flippedx0_ = 0; BPIXLY3_Flippedx0_ = 0; BPIXLY3_Flippedz0_ = 0;
+     BPIXLY3_NonFlippedx0_ = 0; BPIXLY3_NonFlippedx0_ = 0; BPIXLY3_NonFlippedz0_ = 0;
+
+     std::map<int, TVector3> barycentre_L3 = barycentre[3];
+     for (std::map<int, TVector3>::iterator it = barycentre_L3.begin(); it != barycentre_L3.end(); ++it) {
          int ladder = it->first;
-         barycenter_L3[ladder] = (1/nmodules_L3[ladder])*it->second;
-         BPIXLY3x0_.push_back(barycenter_L3[ladder].X() + globalTkPosition.X());
-         BPIXLY3y0_.push_back(barycenter_L3[ladder].Y() + globalTkPosition.Y());
-         BPIXLY3z0_.push_back(barycenter_L3[ladder].Z() + globalTkPosition.Z());
+         barycentre_L3[ladder] = (1/nmodules[3][ladder])*it->second;
+
+         BPIXLY3x0_ += (barycentre_L3[ladder].X() + globalTkPosition.X())/barycentre_L3.size();
+         BPIXLY3y0_ += (barycentre_L3[ladder].Y() + globalTkPosition.Y())/barycentre_L3.size();
+         BPIXLY3z0_ += (barycentre_L3[ladder].Z() + globalTkPosition.Z())/barycentre_L3.size();
+
+         if(ladder%2) { // odd ladder = inner = flipped
+              BPIXLY3_Flippedx0_ += 2*(barycentre_L3[ladder].X() + globalTkPosition.X())/barycentre_L3.size();
+              BPIXLY3_Flippedy0_ += 2*(barycentre_L3[ladder].Y() + globalTkPosition.Y())/barycentre_L3.size();
+              BPIXLY3_Flippedz0_ += 2*(barycentre_L3[ladder].Z() + globalTkPosition.Z())/barycentre_L3.size();
+         }
+         else { // even ladder = outer = non-flipped
+              BPIXLY3_NonFlippedx0_ += 2*(barycentre_L3[ladder].X() + globalTkPosition.X())/barycentre_L3.size();
+              BPIXLY3_NonFlippedy0_ += 2*(barycentre_L3[ladder].Y() + globalTkPosition.Y())/barycentre_L3.size();
+              BPIXLY3_NonFlippedz0_ += 2*(barycentre_L3[ladder].Z() + globalTkPosition.Z())/barycentre_L3.size();
+         }
+
+         vBPIXLY3x0_.push_back(barycentre_L3[ladder].X() + globalTkPosition.X());
+         vBPIXLY3y0_.push_back(barycentre_L3[ladder].Y() + globalTkPosition.Y());
+         vBPIXLY3z0_.push_back(barycentre_L3[ladder].Z() + globalTkPosition.Z());
      }
-     for (std::map<int, TVector3>::iterator it = barycenter_L4.begin(); it != barycenter_L4.end(); ++it) {
+
+     BPIXLY4x0_ = 0; BPIXLY4x0_ = 0; BPIXLY4z0_ = 0;
+     BPIXLY4_Flippedx0_ = 0; BPIXLY4_Flippedx0_ = 0; BPIXLY4_Flippedz0_ = 0;
+     BPIXLY4_NonFlippedx0_ = 0; BPIXLY4_NonFlippedx0_ = 0; BPIXLY4_NonFlippedz0_ = 0;
+
+     std::map<int, TVector3> barycentre_L4 = barycentre[4];
+     for (std::map<int, TVector3>::iterator it = barycentre_L4.begin(); it != barycentre_L4.end(); ++it) {
          int ladder = it->first;
-         barycenter_L4[ladder] = (1/nmodules_L4[ladder])*it->second;
-         BPIXLY4x0_.push_back(barycenter_L4[ladder].X() + globalTkPosition.X());
-         BPIXLY4y0_.push_back(barycenter_L4[ladder].Y() + globalTkPosition.Y());
-         BPIXLY4z0_.push_back(barycenter_L4[ladder].Z() + globalTkPosition.Z());
+         barycentre_L4[ladder] = (1/nmodules[4][ladder])*it->second;
+
+         BPIXLY4x0_ += (barycentre_L4[ladder].X() + globalTkPosition.X())/barycentre_L4.size();
+         BPIXLY4y0_ += (barycentre_L4[ladder].Y() + globalTkPosition.Y())/barycentre_L4.size();
+         BPIXLY4z0_ += (barycentre_L4[ladder].Z() + globalTkPosition.Z())/barycentre_L4.size();
+
+         if(ladder%2==0) { // even ladder = inner = flipped
+              BPIXLY4_Flippedx0_ += 2*(barycentre_L4[ladder].X() + globalTkPosition.X())/barycentre_L4.size();
+              BPIXLY4_Flippedy0_ += 2*(barycentre_L4[ladder].Y() + globalTkPosition.Y())/barycentre_L4.size();
+              BPIXLY4_Flippedz0_ += 2*(barycentre_L4[ladder].Z() + globalTkPosition.Z())/barycentre_L4.size();
+         }
+         else { // odd ladder = outer = non-flipped
+              BPIXLY4_NonFlippedx0_ += 2*(barycentre_L4[ladder].X() + globalTkPosition.X())/barycentre_L4.size();
+              BPIXLY4_NonFlippedy0_ += 2*(barycentre_L4[ladder].Y() + globalTkPosition.Y())/barycentre_L4.size();
+              BPIXLY4_NonFlippedz0_ += 2*(barycentre_L4[ladder].Z() + globalTkPosition.Z())/barycentre_L4.size();
+         }
+
+         vBPIXLY4x0_.push_back(barycentre_L4[ladder].X() + globalTkPosition.X());
+         vBPIXLY4y0_.push_back(barycentre_L4[ladder].Y() + globalTkPosition.Y());
+         vBPIXLY4z0_.push_back(barycentre_L4[ladder].Z() + globalTkPosition.Z());
      }
 
    } // check for new IOV for TKAlign
@@ -354,21 +453,74 @@ PixelBaryCentreAnalyzer::beginJob()
   bctree_->Branch("BPIXy0",&BPIXy0_,"BPIXy0/F");
   bctree_->Branch("BPIXz0",&BPIXz0_,"BPIXz0/F");
 
-  bctree_->Branch("BPIXLY1x0",&BPIXLY1x0_);
-  bctree_->Branch("BPIXLY1y0",&BPIXLY1y0_);
-  bctree_->Branch("BPIXLY1z0",&BPIXLY1z0_);
+  //L1
+  bctree_->Branch("BPIXLY1x0",&BPIXLY1x0_,"BPIXLY1x0/F");
+  bctree_->Branch("BPIXLY1y0",&BPIXLY1y0_,"BPIXLY1y0/F");
+  bctree_->Branch("BPIXLY1z0",&BPIXLY1z0_,"BPIXLY1z0/F");
 
-  bctree_->Branch("BPIXLY2x0",&BPIXLY2x0_);
-  bctree_->Branch("BPIXLY2y0",&BPIXLY2y0_);
-  bctree_->Branch("BPIXLY2z0",&BPIXLY2z0_);
+  bctree_->Branch("BPIXLY1_Flippedx0",&BPIXLY1_Flippedx0_,"BPIXLY1_Flippedx0/F");
+  bctree_->Branch("BPIXLY1_Flippedy0",&BPIXLY1_Flippedy0_,"BPIXLY1_Flippedy0/F");
+  bctree_->Branch("BPIXLY1_Flippedz0",&BPIXLY1_Flippedz0_,"BPIXLY1_Flippedz0/F");
 
-  bctree_->Branch("BPIXLY3x0",&BPIXLY3x0_);
-  bctree_->Branch("BPIXLY3y0",&BPIXLY3y0_);
-  bctree_->Branch("BPIXLY3z0",&BPIXLY3z0_);
+  bctree_->Branch("BPIXLY1_NonFlippedx0",&BPIXLY1_NonFlippedx0_,"BPIXLY1_NonFlippedx0/F");
+  bctree_->Branch("BPIXLY1_NonFlippedy0",&BPIXLY1_NonFlippedy0_,"BPIXLY1_NonFlippedy0/F");
+  bctree_->Branch("BPIXLY1_NonFlippedz0",&BPIXLY1_NonFlippedz0_,"BPIXLY1_NonFlippedz0/F");
 
-  bctree_->Branch("BPIXLY4x0",&BPIXLY4x0_);
-  bctree_->Branch("BPIXLY4y0",&BPIXLY4y0_);
-  bctree_->Branch("BPIXLY4z0",&BPIXLY4z0_);
+  //L2
+  bctree_->Branch("BPIXLY2x0",&BPIXLY2x0_,"BPIXLY2x0/F");
+  bctree_->Branch("BPIXLY2y0",&BPIXLY2y0_,"BPIXLY2y0/F");
+  bctree_->Branch("BPIXLY2z0",&BPIXLY2z0_,"BPIXLY2z0/F");
+
+  bctree_->Branch("BPIXLY2_Flippedx0",&BPIXLY2_Flippedx0_,"BPIXLY2_Flippedx0/F");
+  bctree_->Branch("BPIXLY2_Flippedy0",&BPIXLY2_Flippedy0_,"BPIXLY2_Flippedy0/F");
+  bctree_->Branch("BPIXLY2_Flippedz0",&BPIXLY2_Flippedz0_,"BPIXLY2_Flippedz0/F");
+
+  bctree_->Branch("BPIXLY2_NonFlippedx0",&BPIXLY2_NonFlippedx0_,"BPIXLY2_NonFlippedx0/F");
+  bctree_->Branch("BPIXLY2_NonFlippedy0",&BPIXLY2_NonFlippedy0_,"BPIXLY2_NonFlippedy0/F");
+  bctree_->Branch("BPIXLY2_NonFlippedz0",&BPIXLY2_NonFlippedz0_,"BPIXLY2_NonFlippedz0/F");
+
+  //L3
+  bctree_->Branch("BPIXLY3x0",&BPIXLY3x0_,"BPIXLY3x0/F");
+  bctree_->Branch("BPIXLY3y0",&BPIXLY3y0_,"BPIXLY3y0/F");
+  bctree_->Branch("BPIXLY3z0",&BPIXLY3z0_,"BPIXLY3z0/F");
+
+  bctree_->Branch("BPIXLY3_Flippedx0",&BPIXLY3_Flippedx0_,"BPIXLY3_Flippedx0/F");
+  bctree_->Branch("BPIXLY3_Flippedy0",&BPIXLY3_Flippedy0_,"BPIXLY3_Flippedy0/F");
+  bctree_->Branch("BPIXLY3_Flippedz0",&BPIXLY3_Flippedz0_,"BPIXLY3_Flippedz0/F");
+
+  bctree_->Branch("BPIXLY3_NonFlippedx0",&BPIXLY3_NonFlippedx0_,"BPIXLY3_NonFlippedx0/F");
+  bctree_->Branch("BPIXLY3_NonFlippedy0",&BPIXLY3_NonFlippedy0_,"BPIXLY3_NonFlippedy0/F");
+  bctree_->Branch("BPIXLY3_NonFlippedz0",&BPIXLY3_NonFlippedz0_,"BPIXLY3_NonFlippedz0/F");
+
+  //L4
+  bctree_->Branch("BPIXLY4x0",&BPIXLY4x0_,"BPIXLY4x0/F");
+  bctree_->Branch("BPIXLY4y0",&BPIXLY4y0_,"BPIXLY4y0/F");
+  bctree_->Branch("BPIXLY4z0",&BPIXLY4z0_,"BPIXLY4z0/F");
+
+  bctree_->Branch("BPIXLY4_Flippedx0",&BPIXLY4_Flippedx0_,"BPIXLY4_Flippedx0/F");
+  bctree_->Branch("BPIXLY4_Flippedy0",&BPIXLY4_Flippedy0_,"BPIXLY4_Flippedy0/F");
+  bctree_->Branch("BPIXLY4_Flippedz0",&BPIXLY4_Flippedz0_,"BPIXLY4_Flippedz0/F");
+
+  bctree_->Branch("BPIXLY4_NonFlippedx0",&BPIXLY4_NonFlippedx0_,"BPIXLY4_NonFlippedx0/F");
+  bctree_->Branch("BPIXLY4_NonFlippedy0",&BPIXLY4_NonFlippedy0_,"BPIXLY4_NonFlippedy0/F");
+  bctree_->Branch("BPIXLY4_NonFlippedz0",&BPIXLY4_NonFlippedz0_,"BPIXLY4_NonFlippedz0/F");
+ 
+
+  // per-ladder
+  bctree_->Branch("vBPIXLY1y0",&vBPIXLY1y0_);
+  bctree_->Branch("vBPIXLY1z0",&vBPIXLY1z0_);
+
+  bctree_->Branch("vBPIXLY2x0",&vBPIXLY2x0_);
+  bctree_->Branch("vBPIXLY2y0",&vBPIXLY2y0_);
+  bctree_->Branch("vBPIXLY2z0",&vBPIXLY2z0_);
+
+  bctree_->Branch("vBPIXLY3x0",&vBPIXLY3x0_);
+  bctree_->Branch("vBPIXLY3y0",&vBPIXLY3y0_);
+  bctree_->Branch("vBPIXLY3z0",&vBPIXLY3z0_);
+
+  bctree_->Branch("vBPIXLY4x0",&vBPIXLY4x0_);
+  bctree_->Branch("vBPIXLY4y0",&vBPIXLY4y0_);
+  bctree_->Branch("vBPIXLY4z0",&vBPIXLY4z0_);
 
 }
 
