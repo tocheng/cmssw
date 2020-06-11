@@ -95,6 +95,8 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
       float BPIXx0_, BPIXy0_, BPIXz0_;
       float FPIXx0_, FPIXy0_, FPIXz0_;
 
+      TVector3 PIX_, BPIX_, FPIX_;
+
       std::vector<float> vBPIXLY1x0_, vBPIXLY1y0_, vBPIXLY1z0_;
       std::vector<float> vBPIXLY2x0_, vBPIXLY2y0_, vBPIXLY2z0_;
       std::vector<float> vBPIXLY3x0_, vBPIXLY3y0_, vBPIXLY3z0_;
@@ -179,6 +181,10 @@ void PixelBaryCentreAnalyzer::initBC(){
   FPIXx0_ = dummy_float; 
   FPIXy0_ = dummy_float; 
   FPIXz0_ = dummy_float;
+
+  PIX_  =  TVector3(dummy_float,dummy_float,dummy_float);
+  BPIX_ =  TVector3(dummy_float,dummy_float,dummy_float);
+  FPIX_ =  TVector3(dummy_float,dummy_float,dummy_float);
 
   vBPIXLY1x0_.clear(); vBPIXLY1y0_.clear(); vBPIXLY1z0_.clear();
   vBPIXLY2x0_.clear(); vBPIXLY2y0_.clear(); vBPIXLY2z0_.clear();
@@ -268,6 +274,10 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      //PIX
      TVector3 barycentre_PIX = barycentre_BPIX + barycentre_FPIX; 
      float nmodules_PIX = nmodules_BPIX + nmodules_FPIX;
+     PIX_  = (1/nmodules_PIX)*barycentre_PIX   + globalTkPosition;
+     BPIX_ = (1/nmodules_BPIX)*barycentre_BPIX + globalTkPosition;
+     FPIX_ = (1/nmodules_FPIX)*barycentre_FPIX + globalTkPosition;
+
      PIXx0_ = barycentre_PIX.X()/nmodules_PIX + globalTkPosition.X();
      PIXy0_ = barycentre_PIX.Y()/nmodules_PIX + globalTkPosition.Y();
      PIXz0_ = barycentre_PIX.Z()/nmodules_PIX + globalTkPosition.Z();
@@ -444,6 +454,10 @@ PixelBaryCentreAnalyzer::beginJob()
   bctree_->Branch("BSx0",&BSx0_,"BSx0/F");
   bctree_->Branch("BSy0",&BSy0_,"BSy0/F");	   
   bctree_->Branch("BSz0",&BSz0_,"BSz0/F");	   
+
+  bctree_->Branch("PIX",&PIX_);
+  bctree_->Branch("BPIX",&BPIX_);
+  bctree_->Branch("FPIX",&FPIX_);
 
   bctree_->Branch("PIXx0",&PIXx0_,"PIXx0/F");
   bctree_->Branch("PIXy0",&PIXy0_,"PIXy0/F");
