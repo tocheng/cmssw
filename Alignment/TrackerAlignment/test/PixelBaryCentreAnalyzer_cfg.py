@@ -11,9 +11,9 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = 100#000000                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000#000                            # do not clog output with IO
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )       # large number of events is needed since we probe 5000LS for run (see below)
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(50000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -35,6 +35,15 @@ process.source = cms.Source("EmptySource",
 # either from Global Tag
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data")
+
+process.GlobalTag.toGet.append(
+  cms.PSet(
+    record = cms.string("TrackerAlignmentRcd"),
+    label = cms.untracked.string("prompt"),
+    tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
+    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+  )
+)
 
 # ...or specify database connection and tag:  
 #from CondCore.CondDB.CondDB_cfi import *

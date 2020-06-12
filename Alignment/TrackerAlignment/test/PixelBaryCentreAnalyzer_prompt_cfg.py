@@ -13,7 +13,7 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
 process.MessageLogger.cerr.FwkReport.reportEvery = 100#000000                            # do not clog output with IO
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )       # large number of events is needed since we probe 5000LS for run (see below)
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(50000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -38,7 +38,8 @@ process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data_promptlike")
 process.GlobalTag.toGet.append(
   cms.PSet(
     record = cms.string("TrackerAlignmentRcd"),
-    tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
+    label = cms.untracked.string("offline"),
+    tag = cms.string("TrackerAlignment_v29_offline"),
     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
   )
 )
@@ -71,7 +72,7 @@ process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentr
 # Output file
 ####################################################################
 process.TFileService = cms.Service("TFileService",
-                                   fileName=cms.string("PixelBaryCentre.root")
+                                   fileName=cms.string("PixelBaryCentre_Prompt.root")
                                    ) 
 
 # Put module in path:
