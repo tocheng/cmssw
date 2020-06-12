@@ -11,9 +11,11 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000#000                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = 5000                            # do not clog output with IO
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(50000) )       # large number of events is needed since we probe 5000LS for run (see below)
+lumisPerRun=5000
+
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(lumisPerRun*50000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -25,7 +27,7 @@ process.source = cms.Source("EmptySource",
                             firstRun = cms.untracked.uint32(294929),
                             firstLuminosityBlock = cms.untracked.uint32(1),           # probe one LS after the other
                             numberEventsInLuminosityBlock = cms.untracked.uint32(1),  # probe one event per LS
-                            numberEventsInRun = cms.untracked.uint32(1),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
+                            numberEventsInRun = cms.untracked.uint32(lumisPerRun),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
                             )
 
 ####################################################################
@@ -41,6 +43,15 @@ process.GlobalTag.toGet.append(
     record = cms.string("TrackerAlignmentRcd"),
     label = cms.untracked.string("prompt"),
     tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
+    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+  )
+)
+
+process.GlobalTag.toGet.append(
+  cms.PSet(
+    record = cms.string("BeamSpotObjectsRcd"),
+    label = cms.untracked.string("prompt"),
+    tag = cms.string("BeamSpotObjects_PCL_byLumi_v0_prompt"),
     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
   )
 )

@@ -11,9 +11,11 @@ process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = 100#000000                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = 500#000000                            # do not clog output with IO
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(50000) )       # large number of events is needed since we probe 5000LS for run (see below)
+lumisPerRun=5000
+
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(lumisPerRun*50000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -25,7 +27,7 @@ process.source = cms.Source("EmptySource",
                             firstRun = cms.untracked.uint32(294929),
                             firstLuminosityBlock = cms.untracked.uint32(1),           # probe one LS after the other
                             numberEventsInLuminosityBlock = cms.untracked.uint32(1),  # probe one event per LS
-                            numberEventsInRun = cms.untracked.uint32(1),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
+                            numberEventsInRun = cms.untracked.uint32(lumisPerRun),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
                             )
 
 ####################################################################
@@ -38,8 +40,17 @@ process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data_promptlike")
 process.GlobalTag.toGet.append(
   cms.PSet(
     record = cms.string("TrackerAlignmentRcd"),
-    label = cms.untracked.string("offline"),
+    label = cms.untracked.string("rereco"),
     tag = cms.string("TrackerAlignment_v29_offline"),
+    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+  )
+)
+
+process.GlobalTag.toGet.append(
+  cms.PSet(
+    record = cms.string("BeamSpotObjectsRcd"),
+    label = cms.untracked.string("rereco"),
+    tag = cms.string("BeamSpotObjects_2016_2017_2018UL_SpecialRuns_LumiBased_v1"),
     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
   )
 )
