@@ -23,9 +23,12 @@ options.register('firstRun',
                 VarParsing.VarParsing.varType.int,
                 "the first run number be processed")
 
+options.parseArguments()
+
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = options.lumisPerRun*100                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = options.lumisPerRun*100   # do not clog output with I/O
+
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.lumisPerRun*40000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
@@ -46,14 +49,15 @@ process.source = cms.Source("EmptySource",
 # Connect to conditions DB
 ####################################################################
 
+# either from Global Tag
 from Configuration.AlCa.GlobalTag import GlobalTag
-process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data_promptlike")
+process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data")
 
 process.GlobalTag.toGet.append(
   cms.PSet(
     record = cms.string("TrackerAlignmentRcd"),
-    label = cms.untracked.string("rereco"),
-    tag = cms.string("TrackerAlignment_v29_offline"),
+    label = cms.untracked.string("prompt"),
+    tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
   )
 )
@@ -61,8 +65,8 @@ process.GlobalTag.toGet.append(
 process.GlobalTag.toGet.append(
   cms.PSet(
     record = cms.string("BeamSpotObjectsRcd"),
-    label = cms.untracked.string("rereco"),
-    tag = cms.string("BeamSpotObjects_2016_2017_2018UL_SpecialRuns_LumiBased_v1"),
+    label = cms.untracked.string("prompt"),
+    tag = cms.string("BeamSpotObjects_PCL_byLumi_v0_prompt"),
     connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
   )
 )
@@ -95,7 +99,7 @@ process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentr
 # Output file
 ####################################################################
 process.TFileService = cms.Service("TFileService",
-                                   fileName=cms.string("PixelBaryCentre_Prompt.root")
+                                   fileName=cms.string("PixelBaryCentre_Rereco.root")
                                    ) 
 
 # Put module in path:
