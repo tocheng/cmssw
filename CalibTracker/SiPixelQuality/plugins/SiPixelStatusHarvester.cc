@@ -58,6 +58,7 @@ using namespace edm;
 //--------------------------------------------------------------------------------------------------
 SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig) :
   HistogramManagerHolder(iConfig),
+  test_thresholds_(iConfig.getUntrackedParameter<std::vector<double>>("test_thresholds")),
   thresholdL1_(iConfig.getParameter<ParameterSet>("SiPixelStatusManagerParameters").getUntrackedParameter<double>("thresholdL1")),
   thresholdL2_(iConfig.getParameter<ParameterSet>("SiPixelStatusManagerParameters").getUntrackedParameter<double>("thresholdL2")),
   thresholdL3_(iConfig.getParameter<ParameterSet>("SiPixelStatusManagerParameters").getUntrackedParameter<double>("thresholdL3")),
@@ -86,7 +87,7 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
   emptyRun = true;
   
   // pixel substructure
-  substructures.clear();
+  substructures_.clear();
   for(int ly = 1; ly<=4; ly++){
       for (int signed_mod = -4; signed_mod<=4; signed_mod++){
           if(signed_mod==0) continue;
@@ -96,7 +97,8 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
           substructure += "MOD";
           std::string MOD = std::to_string(signed_mod);
           substructure += MOD;          
-          substructures.push_back(substructure); 
+
+          substructures_.push_back(substructure); 
       }
   }
   ///
@@ -109,20 +111,17 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
           substructure += "Disk";
           std::string Disk = std::to_string(signed_disk);
           substructure += Disk;
-          substructures.push_back(substructure);
+
+          substructures_.push_back(substructure);
       }
   } 
 
-  p001.clear(); p005.clear();
-  p01.clear();  p05.clear();
-  p1.clear();   p2.clear();  p5.clear();
-
   _digiTotal = 0;
+
   _digiLossp001 = 0; _digiLossp005 = 0;
   _digiLossp01 = 0; _digiLossp05 = 0; _digiLossp1 = 0;
   _digiLossp02 = 0; _digiLossp06 = 0; _digiLossp07 = 0; _digiLossp08 = 0; _digiLossp09 = 0;
   _digiLossp2 = 0; _digiLossp5 = 0;
-
   _nLossp001 = 0; _nLossp005 = 0;
   _nLossp01 = 0; _nLossp05 = 0; _nLossp1 = 0;
   _nLossp02 = 0; _nLossp06 = 0; _nLossp07 = 0; _nLossp08 = 0; _nLossp09 = 0;
@@ -130,42 +129,46 @@ SiPixelStatusHarvester::SiPixelStatusHarvester(const edm::ParameterSet& iConfig)
 
   _interval = 0;
 
-  for(unsigned int s = 0; s<substructures.size(); s++){
+  for(unsigned int s = 0; s<substructures_.size(); s++){
 
-         TString subTs = TString(substructures[s]);
+         std::string substructure = substructures_[s];
+         TString subTs = TString(substructure);
 
-         digiTrees[substructures[s]] = new TTree(subTs,subTs);
-         digiTrees[substructures[s]]->Branch("digiTotal",&_digiTotal,"digiTotal/I");
-         digiTrees[substructures[s]]->Branch("digiLossp001",&_digiLossp001,"digiLossp001/I");
-         digiTrees[substructures[s]]->Branch("digiLossp005",&_digiLossp005,"digiLossp005/I");
-         digiTrees[substructures[s]]->Branch("digiLossp01",&_digiLossp01,"digiLossp01/I");
-         digiTrees[substructures[s]]->Branch("digiLossp02",&_digiLossp02,"digiLossp02/I");
-         digiTrees[substructures[s]]->Branch("digiLossp05",&_digiLossp05,"digiLossp05/I");
-         digiTrees[substructures[s]]->Branch("digiLossp06",&_digiLossp06,"digiLossp06/I");
-         digiTrees[substructures[s]]->Branch("digiLossp07",&_digiLossp07,"digiLossp07/I");
-         digiTrees[substructures[s]]->Branch("digiLossp08",&_digiLossp08,"digiLossp08/I");
-         digiTrees[substructures[s]]->Branch("digiLossp09",&_digiLossp09,"digiLossp09/I");
-         digiTrees[substructures[s]]->Branch("digiLossp1",&_digiLossp1,"digiLossp1/I");
-         digiTrees[substructures[s]]->Branch("digiLossp2",&_digiLossp2,"digiLossp2/I");
-         digiTrees[substructures[s]]->Branch("digiLossp5",&_digiLossp5,"digiLossp5/I");
+         _digiTrees[substructure] = new TTree(subTs,subTs);
+         _digiTrees[substructure]->Branch("digiTotal",&_digiTotal,"digiTotal/I");
+         _digiTrees[substructure]->Branch("digiLoss",&_digiLoss);
+         _digiTrees[substructure]->Branch("nRocLoss",&_nRocLoss);
 
-         digiTrees[substructures[s]]->Branch("nLossp001",&_nLossp001,"nLossp001/I");
-         digiTrees[substructures[s]]->Branch("nLossp005",&_nLossp005,"nLossp005/I");
-         digiTrees[substructures[s]]->Branch("nLossp01",&_nLossp01,"nLossp01/I");
-         digiTrees[substructures[s]]->Branch("nLossp02",&_nLossp02,"nLossp02/I");
-         digiTrees[substructures[s]]->Branch("nLossp05",&_nLossp05,"nLossp05/I");
-         digiTrees[substructures[s]]->Branch("nLossp06",&_nLossp06,"nLossp06/I");
-         digiTrees[substructures[s]]->Branch("nLossp07",&_nLossp07,"nLossp07/I");
-         digiTrees[substructures[s]]->Branch("nLossp08",&_nLossp08,"nLossp08/I");
-         digiTrees[substructures[s]]->Branch("nLossp09",&_nLossp09,"nLossp09/I");
-         digiTrees[substructures[s]]->Branch("nLossp1",&_nLossp1,"nLossp1/I");
-         digiTrees[substructures[s]]->Branch("nLossp2",&_nLossp2,"nLossp2/I");
-         digiTrees[substructures[s]]->Branch("nLossp5",&_nLossp5,"nLossp5/I");
+         _digiTrees[substructure]->Branch("digiLossp001",&_digiLossp001,"digiLossp001/I");
+         _digiTrees[substructure]->Branch("digiLossp005",&_digiLossp005,"digiLossp005/I");
+         _digiTrees[substructure]->Branch("digiLossp01",&_digiLossp01,"digiLossp01/I");
+         _digiTrees[substructure]->Branch("digiLossp02",&_digiLossp02,"digiLossp02/I");
+         _digiTrees[substructure]->Branch("digiLossp05",&_digiLossp05,"digiLossp05/I");
+         _digiTrees[substructure]->Branch("digiLossp06",&_digiLossp06,"digiLossp06/I");
+         _digiTrees[substructure]->Branch("digiLossp07",&_digiLossp07,"digiLossp07/I");
+         _digiTrees[substructure]->Branch("digiLossp08",&_digiLossp08,"digiLossp08/I");
+         _digiTrees[substructure]->Branch("digiLossp09",&_digiLossp09,"digiLossp09/I");
+         _digiTrees[substructure]->Branch("digiLossp1",&_digiLossp1,"digiLossp1/I");
+         _digiTrees[substructure]->Branch("digiLossp2",&_digiLossp2,"digiLossp2/I");
+         _digiTrees[substructure]->Branch("digiLossp5",&_digiLossp5,"digiLossp5/I");
 
-         digiTrees[substructures[s]]->Branch("interval",&_interval,"interval/I");
+         _digiTrees[substructure]->Branch("nLossp001",&_nLossp001,"nLossp001/I");
+         _digiTrees[substructure]->Branch("nLossp005",&_nLossp005,"nLossp005/I");
+         _digiTrees[substructure]->Branch("nLossp01",&_nLossp01,"nLossp01/I");
+         _digiTrees[substructure]->Branch("nLossp02",&_nLossp02,"nLossp02/I");
+         _digiTrees[substructure]->Branch("nLossp05",&_nLossp05,"nLossp05/I");
+         _digiTrees[substructure]->Branch("nLossp06",&_nLossp06,"nLossp06/I");
+         _digiTrees[substructure]->Branch("nLossp07",&_nLossp07,"nLossp07/I");
+         _digiTrees[substructure]->Branch("nLossp08",&_nLossp08,"nLossp08/I");
+         _digiTrees[substructure]->Branch("nLossp09",&_nLossp09,"nLossp09/I");
+         _digiTrees[substructure]->Branch("nLossp1",&_nLossp1,"nLossp1/I");
+         _digiTrees[substructure]->Branch("nLossp2",&_nLossp2,"nLossp2/I");
+         _digiTrees[substructure]->Branch("nLossp5",&_nLossp5,"nLossp5/I");
+
+         _digiTrees[substructure]->Branch("interval",&_interval,"interval/I");
 
          //instLumi
-         //digiTrees[substructures[s]]->Branch("instLumi",&instLumis);
+         //_digiTrees[substructure]->Branch("instLumi",&instLumis);
 
   }
 
@@ -185,15 +188,15 @@ void SiPixelStatusHarvester::endJob() {
 
        histoFile->cd();
 
-       for(unsigned int s = 0; s<substructures.size(); s++){
+       for(unsigned int s = 0; s<substructures_.size(); s++){
 
-           digiTrees[substructures[s]]->Write();
+           _digiTrees[substructures_[s]]->Write();
 
        }
 
        histoFile->Close();
        
-       digiTrees.clear();
+       _digiTrees.clear();
 
     }
 
@@ -666,6 +669,7 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
      delete siPixelQualityPermBad;
 
     // file to host hists for threshold checking
+
     std::string runString = std::to_string(iRun.run());
     histoFile = new TFile("PixelDigiHisto_Run"+TString(runString)+".root","RECREATE");
 
@@ -685,14 +689,10 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
 
          unsigned long int Nevents = tmpSiPixelStatus.getNevents();
 
-         std::map<string, unsigned int> digiTotal;
-         std::map<string, unsigned int> digiLossp001, digiLossp005;
-         std::map<string, unsigned int> digiLossp01, digiLossp05, digiLossp1, digiLossp2, digiLossp5;
-         std::map<string, unsigned int> digiLossp02, digiLossp06, digiLossp07, digiLossp08, digiLossp09;
-
-         std::map<string, unsigned int> nLossp001, nLossp005;
-         std::map<string, unsigned int> nLossp01, nLossp05, nLossp1, nLossp2, nLossp5;
-         std::map<string, unsigned int> nLossp02, nLossp06, nLossp07, nLossp08, nLossp09;
+         std::map<std::string, unsigned int> digiTotal;
+         //         threshold,          substructure,value
+         std::map<std::string, std::map<std::string, unsigned int>> digiLoss;
+         std::map<std::string, std::map<std::string, unsigned int>> nRocLoss;
 
          // loop over modules
          std::map<int, SiPixelModuleStatus> detectorStatus = tmpSiPixelStatus.getDetectorStatus();
@@ -702,9 +702,17 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
               int detid = itMod->first;
               uint32_t detId = uint32_t(detid);
               double DetAverage_local = SiPixelStatusHarvester::perLayerRingAverage(detid,tmpSiPixelStatus);
+              double DetAverage_finerLocal = SiPixelStatusHarvester::perLayerModRingDiskAverage(detid,tmpSiPixelStatus);
 
               // name of the pixel detector substructure
-              string substructure = SiPixelStatusHarvester::substructure(detid);
+              std::string substructure = SiPixelStatusHarvester::substructure(detid);
+              /*
+              bool wrongSubstructure = true;
+              for(unsigned int i = 0; i <substructures_.size();i++){
+                  if(substructure==substructures_[i]) {wrongSubstructure=false;break;}
+              }
+              if(wrongSubstructure) std::cout<<"Substructure not in the prebooked ones"<<std::endl;
+              */
 
               SiPixelModuleStatus modStatus = itMod->second;
               std::map<int, std::pair<int,int> > rocToOfflinePixel = pixelO2O_[detid];
@@ -712,15 +720,25 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
 
                    unsigned int rocOccupancy = modStatus.digiOccROC(iroc);
 
+                   // for threshold studies
+                   digiTotal[substructure] += rocOccupancy;
+                   for (unsigned int it = 0; it < test_thresholds_.size(); ++it){
+
+                        std::string test_threshold = std::to_string(test_thresholds_[it]);
+
+                        if(rocOccupancy<test_thresholds_[it]*DetAverage_finerLocal){
+                          digiLoss[test_threshold][substructure] += rocOccupancy;
+                          nRocLoss[test_threshold][substructure] += 1;
+                        }
+
+                   }
+
                    int row = rocToOfflinePixel[iroc].first;
                    int column = rocToOfflinePixel[iroc].second;
 
-                   digiTotal[substructure] += rocOccupancy;
-
                    double permDead = -10;
+                       
                    if(rocOccupancy<0.001*DetAverage_local){
-                      digiLossp001[substructure] += rocOccupancy;
-                      nLossp001[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                             histo[BADROCp001].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -735,8 +753,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.005*DetAverage_local){
-                      digiLossp005[substructure] += rocOccupancy;
-                      nLossp005[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                             histo[BADROCp005].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -751,8 +767,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.01*DetAverage_local){
-                      digiLossp01[substructure] += rocOccupancy;
-                      nLossp01[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                             histo[BADROCp01].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -767,8 +781,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.05*DetAverage_local){
-                      digiLossp05[substructure] += rocOccupancy;
-                      nLossp05[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                             histo[BADROCp05].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -783,8 +795,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.1*DetAverage_local){
-                      digiLossp1[substructure] += rocOccupancy;
-                      nLossp1[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                               histo[BADROCp1].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -799,8 +809,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.2*DetAverage_local){
-                      digiLossp2[substructure] += rocOccupancy;
-                      nLossp2[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                               histo[BADROCp2].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -815,8 +823,6 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                    }
 
                    if(rocOccupancy<0.5*DetAverage_local){
-                      digiLossp5[substructure] += rocOccupancy;
-                      nLossp5[substructure] += 1;
                       for (int iLumi = 0; iLumi<interval;iLumi++){
                           if(rocOccupancy>0){
                             histo[BADROCp5].fill(log(rocOccupancy*1.0/Nevents)/log(10),detId, nullptr, column, row);}
@@ -830,63 +836,51 @@ void SiPixelStatusHarvester::endRunProduce(edm::Run& iRun, const edm::EventSetup
                         }
                    }
 
-                   if(rocOccupancy<0.02*DetAverage_local){
-                      digiLossp02[substructure] += rocOccupancy;
-                      nLossp02[substructure] += 1;
-                   }
-                   if(rocOccupancy<0.06*DetAverage_local){
-                      digiLossp06[substructure] += rocOccupancy;
-                      nLossp06[substructure] += 1;
-                   }
-                   if(rocOccupancy<0.07*DetAverage_local){
-                      digiLossp07[substructure] += rocOccupancy;
-                      nLossp07[substructure] += 1;
-                   }
-                   if(rocOccupancy<0.08*DetAverage_local){
-                      digiLossp08[substructure] += rocOccupancy;
-                      nLossp08[substructure] += 1;
-                   }
-                   if(rocOccupancy<0.09*DetAverage_local){
-                      digiLossp09[substructure] += rocOccupancy;
-                      nLossp09[substructure] += 1;
-                   }
-
                } // loop over ROCs of a given module
 
           }// loop over modules
 
-          for(unsigned int s = 0; s<substructures.size(); s++){
+          for(unsigned int s = 0; s<substructures_.size(); s++){
 
-              _digiTotal = digiTotal[substructures[s]];
-              _digiLossp001 = digiLossp001[substructures[s]];
-              _digiLossp005 = digiLossp005[substructures[s]];
-              _digiLossp01 = digiLossp01[substructures[s]];
-              _digiLossp02 = digiLossp01[substructures[s]];
-              _digiLossp05 = digiLossp05[substructures[s]];
-              _digiLossp06 = digiLossp06[substructures[s]];
-              _digiLossp07 = digiLossp07[substructures[s]];
-              _digiLossp08 = digiLossp08[substructures[s]];
-              _digiLossp09 = digiLossp09[substructures[s]];
-              _digiLossp1 = digiLossp1[substructures[s]];
-              _digiLossp2 = digiLossp2[substructures[s]];
-              _digiLossp5 = digiLossp5[substructures[s]];
+              std::string substructure = substructures_[s];
+              _digiTotal = digiTotal[substructure];
 
-              _nLossp001 = nLossp001[substructures[s]];
-              _nLossp005 = nLossp005[substructures[s]];
-              _nLossp01 = nLossp01[substructures[s]];
-              _nLossp02 = nLossp01[substructures[s]];
-              _nLossp05 = nLossp05[substructures[s]];
-              _nLossp06 = nLossp06[substructures[s]];
-              _nLossp07 = nLossp07[substructures[s]];
-              _nLossp08 = nLossp08[substructures[s]];
-              _nLossp09 = nLossp09[substructures[s]];
-              _nLossp1 = nLossp1[substructures[s]];
-              _nLossp2 = nLossp2[substructures[s]];
-              _nLossp5 = nLossp5[substructures[s]];
+              for (unsigned int it = 0; it < test_thresholds_.size(); ++it){
+                  std::string test_threshold = std::to_string(test_thresholds_[it]);
+
+                  _digiLoss[test_threshold] = digiLoss[test_threshold][substructure];
+                  _nRocLoss[test_threshold] = nRocLoss[test_threshold][substructure];
+              }
+
+              _digiLossp001 = digiLoss["0.001000"][substructure];
+              _digiLossp005 = digiLoss["0.005000"][substructure];
+              _digiLossp01 = digiLoss["0.010000"][substructure];
+              _digiLossp02 = digiLoss["0.020000"][substructure];
+              _digiLossp05 = digiLoss["0.050000"][substructure];
+              _digiLossp06 = digiLoss["0.060000"][substructure];
+              _digiLossp07 = digiLoss["0.070000"][substructure];
+              _digiLossp08 = digiLoss["0.080000"][substructure];
+              _digiLossp09 = digiLoss["0.090000"][substructure];
+              _digiLossp1 = digiLoss["0.100000"][substructure];
+              _digiLossp2 = digiLoss["0.200000"][substructure];
+              _digiLossp5 = digiLoss["0.500000"][substructure];
+
+              _nLossp001 = nRocLoss["0.001000"][substructure];
+              _nLossp005 = nRocLoss["0.005000"][substructure];
+              _nLossp01 = nRocLoss["0.010000"][substructure];
+              _nLossp02 = nRocLoss["0.020000"][substructure];
+              _nLossp05 = nRocLoss["0.050000"][substructure];
+              _nLossp06 = nRocLoss["0.060000"][substructure];
+              _nLossp07 = nRocLoss["0.070000"][substructure];
+              _nLossp08 = nRocLoss["0.080000"][substructure];
+              _nLossp09 = nRocLoss["0.090000"][substructure];
+              _nLossp1 = nRocLoss["0.100000"][substructure];
+              _nLossp2 = nRocLoss["0.200000"][substructure];
+              _nLossp5 = nRocLoss["0.500000"][substructure];
 
               _interval = interval;
 
-              digiTrees[substructures[s]]->Fill();
+              _digiTrees[substructure]->Fill();
 
            } // loop over different pixel substructures
 
@@ -1026,21 +1020,53 @@ double SiPixelStatusHarvester::perLayerRingAverage(int detid, SiPixelDetectorSta
 
 }     
 
+double SiPixelStatusHarvester::perLayerModRingDiskAverage(int detid, SiPixelDetectorStatus tmpSiPixelStatus) {
+
+          unsigned long int ave(0);
+          int nrocs(0);
+
+          int layer  = coord_.layer(DetId(detid));
+          int ring   = coord_.ring(DetId(detid));
+
+          int mod  = abs(coord_.signed_module(DetId(detid)) );
+          int disk = abs(coord_.signed_disk(DetId(detid))   );
+
+          std::map<int, SiPixelModuleStatus> detectorStatus = tmpSiPixelStatus.getDetectorStatus();
+          std::map<int, SiPixelModuleStatus>::iterator itModEnd = detectorStatus.end();
+          for (std::map<int, SiPixelModuleStatus>::iterator itMod = detectorStatus.begin(); itMod != itModEnd; ++itMod) {
+
+               if( layer != coord_.layer(DetId(itMod->first)) ) continue;
+               if( ring  != coord_.ring(DetId(itMod->first)) ) continue;
+
+               if( mod   != abs(coord_.signed_module(DetId(itMod->first)) ) ) continue;
+               if( disk  != abs(coord_.signed_disk(DetId(itMod->first))   ) ) continue;
+
+               unsigned long int inc = itMod->second.digiOccMOD();
+               ave += inc;
+               nrocs += itMod->second.nrocs();
+          }
+
+          if(nrocs>0)
+            return ave*1.0/nrocs;
+          else return 0.0;
+
+}
+
 std::string SiPixelStatusHarvester::substructure(int detid){     
      
        std::string substructure = "";
        int layer = coord_.layer(DetId(detid));
 
-       if(layer>0){
-         std::string L = std::to_string(layer);
+       if(layer>0 && layer<5){ //layer 1 to 4
          substructure = "BpixLYR";
+         std::string L = std::to_string(layer);
          substructure += L;
 
          substructure += "MOD"; 
-         int signed_module = coord_.signed_module(DetId(detid));
-         std::string MOD = std::to_string(signed_module);
+         int signed_mod = coord_.signed_module(DetId(detid));
+         std::string MOD = std::to_string(signed_mod);
          substructure += MOD;
-    
+     
        }  
        else{
          substructure = "FpixRNG";

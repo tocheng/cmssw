@@ -65,6 +65,7 @@ class SiPixelStatusHarvester : public one::DQMEDAnalyzer<edm::one::WatchLuminosi
  private:
 
   // Parameters
+  std::vector<double> test_thresholds_;
   double thresholdL1_, thresholdL2_, thresholdL3_, thresholdL4_, thresholdRNG1_, thresholdRNG2_;
   std::string outputBase_;
   int aveDigiOcc_;
@@ -96,9 +97,11 @@ class SiPixelStatusHarvester : public one::DQMEDAnalyzer<edm::one::WatchLuminosi
   std::map<int, std::map<int, std::pair<int,int> > > pixelO2O_;
 
   //Helper functions
-  std::vector<std::string> substructures;
-  double perLayerRingAverage(int detid, SiPixelDetectorStatus tmpSiPixelStatus);
+  std::vector<std::string> substructures_;
   std::string substructure(int detid);
+
+  double perLayerRingAverage(int detid, SiPixelDetectorStatus tmpSiPixelStatus);
+  double perLayerModRingDiskAverage(int detid, SiPixelDetectorStatus tmpSiPixelStatus);
 
   // "step function" for IOV
   edm::LuminosityBlockNumber_t stepIOV(edm::LuminosityBlockNumber_t pin, std::map<edm::LuminosityBlockNumber_t,edm::LuminosityBlockNumber_t> IOV);
@@ -115,10 +118,13 @@ class SiPixelStatusHarvester : public one::DQMEDAnalyzer<edm::one::WatchLuminosi
   // for testing threshold
   bool emptyRun;
   TFile * histoFile;
-  std::map<std::string, TH1F*> p001, p005, p01, p05, p1, p2, p5;
-  std::map<std::string, TTree*> digiTrees;
+  //std::map<std::string, TH1F*> p001, p005, p01, p05, p1, p2, p5;
+
+  std::map<std::string, TTree*> _digiTrees;
   int _digiTotal, _digiLossp001, _digiLossp005, _digiLossp01, _digiLossp05, _digiLossp1, _digiLossp2, _digiLossp5;
   int _digiLossp02, _digiLossp06, _digiLossp07, _digiLossp08, _digiLossp09;
+  std::map<std::string,int> _digiLoss;
+  std::map<std::string,int> _nRocLoss;
 
   int _nLossp001, _nLossp005, _nLossp01, _nLossp05, _nLossp1, _nLossp2, _nLossp5;
   int _nLossp02, _nLossp06, _nLossp07, _nLossp08, _nLossp09;
