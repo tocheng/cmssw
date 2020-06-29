@@ -83,10 +83,12 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
       bool usePixelQuality_; 
       const SiPixelQuality* badPixelInfo_ = nullptr;
 
-      SiPixelCoordinates coord_;
+      int phase_;
+      const TrackerGeometry* tkGeo_ = nullptr;
+      const TrackerTopology* tkTopo_ = nullptr;
 
-      int   run_;
-      int   ls_;
+      int run_;
+      int ls_;
 
       double BSx0_, BSy0_, BSz0_;
       TVector3 BS_;
@@ -187,19 +189,34 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
    if(!prepareTkAlign && !prepareBS) return;
 
-   // Pixel Phase-1 helper class
-   coord_.init(iSetup);
-
    run_  = iEvent.id().run();
    ls_   = iEvent.id().luminosityBlock();
 
    if ( prepareTkAlign ) { // check for new IOV for TKAlign
+
+     phase_ = -1;
+
+     //ES tracker geo and topology
+     edm::ESHandle<TrackerGeometry> trackerGeometryHandel;
+     iSetup.get<TrackerDigiGeometryRecord>().get(trackerGeometryHandel);
+     tkGeo_ = trackerGeometryHandel.product();
+
+     edm::ESHandle<TrackerTopology> trackerTopologyHandle;
+     iSetup.get<TrackerTopologyRcd>().get(trackerTopologyHandle);
+     tkTopo_ = trackerTopologyHandle.product();
+
+     if (tkGeo_->isThere(GeomDetEnumerators::PixelBarrel) && tkGeo_->isThere(GeomDetEnumerators::PixelEndcap))
+        phase_ = 0;
+     else if (tkGeo_->isThere(GeomDetEnumerators::P1PXB) && tkGeo_->isThere(GeomDetEnumerators::P1PXEC))
+        phase_ = 1;
+
      
      // pixel quality
      edm::ESHandle<SiPixelQuality> qualityInfo;
      iSetup.get<SiPixelQualityFromDbRcd>().get( qualityInfo );
      badPixelInfo_ = qualityInfo.product();
 
+     // global position
      edm::ESHandle<Alignments> globalAlignments;
      iSetup.get<GlobalPositionRcd>().get(globalAlignments);
      std::unique_ptr<const Alignments> globalPositions = std::make_unique<Alignments>(*globalAlignments);
@@ -229,20 +246,22 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      // loop over tracker module
      for (const auto &ali : tkAlignments) {
 
+        //DetId
+        const DetId& detId = DetId(ali.rawId());
         // remove bad module
-        if(usePixelQuality_ && badPixelInfo_->IsModuleBad(DetId(ali.rawId())) ) continue;
+        if(usePixelQuality_ && badPixelInfo_->IsModuleBad(detId) ) continue;
 
         TVector3 ali_translation(ali.translation().x(),ali.translation().y(),ali.translation().z());
 
-        int subid = DetId(ali.rawId()).subdetId();
+        int subid = DetId(detId).subdetId();
         // BPIX
         if (subid == PixelSubdetector::PixelBarrel){
 
            nmodules_BPIX += 1; 
            barycentre_BPIX += ali_translation;
            
-           int layer  = coord_.layer( DetId(ali.rawId()) );
-           int ladder = coord_.ladder( DetId(ali.rawId()) );
+           int layer  = tkTopo_->pxbLayer(detId);
+           int ladder = tkTopo_->pxbLadder(detId);
 
            nmodules[layer][ladder] += 1;
            barycentre[layer][ladder] += ali_translation;
@@ -265,7 +284,9 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      PIXy0_ = PIX_.Y();
      PIXz0_ = PIX_.Z();
 
+     //BPIX
      BPIX_ = (1.0/nmodules_BPIX)*barycentre_BPIX + globalTkPosition;
+     //FPIX
      FPIX_ = (1.0/nmodules_FPIX)*barycentre_FPIX + globalTkPosition;
 
      // BPix barycentre per-ladder per-layer
@@ -277,7 +298,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      */
 
      // loop over layers
-     for (unsigned int i=0; i<4; i++){
+     for (unsigned int i=0; i<barycentre.size(); i++){
 
           int layer = i+1;
 
@@ -297,25 +318,62 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
               nmodulesLayer += nmodules[layer][ladder];
               BPIXLayer     += barycentreLayer[ladder];
-              if(layer!=4){ // layer 1-3
-                 if(ladder%2!=0) { // odd ladder = inner = flipped 
-                    nmodulesLayer_Flipped += nmodules[layer][ladder];
-                    BPIXLayer_Flipped     += barycentreLayer[ladder]; }
-                 else{ 
-                    nmodulesLayer_NonFlipped += nmodules[layer][ladder];
-                    BPIXLayer_NonFlipped     += barycentreLayer[ladder];}
-              }
-              else{ // layer-4
-                  if(ladder%2==0) { // even ladder = inner = flipped
-                     nmodulesLayer_Flipped += nmodules[layer][ladder];
-                     BPIXLayer_Flipped     += barycentreLayer[ladder]; }
-                  else { // odd ladder = outer = non-flipped
-                     nmodulesLayer_NonFlipped += nmodules[layer][ladder];
-                     BPIXLayer_NonFlipped     += barycentreLayer[ladder]; }
-              }
+              
+              // Phase-1
+              //
+              // Phase 1: Outer ladders are odd for layer 4 and even for layer 1,2,3
+              if(phase_ == 1) {
+
+                 if(layer!=4){ // layer 1-3
+
+                    if(ladder%2!=0) { // odd ladder = inner = flipped 
+                       nmodulesLayer_Flipped += nmodules[layer][ladder];
+                       BPIXLayer_Flipped     += barycentreLayer[ladder]; }
+                    else{ 
+                       nmodulesLayer_NonFlipped += nmodules[layer][ladder];
+                       BPIXLayer_NonFlipped     += barycentreLayer[ladder];}
+                 }
+                 else{ // layer-4
+
+                     if(ladder%2==0) { // even ladder = inner = flipped
+                        nmodulesLayer_Flipped += nmodules[layer][ladder];
+                        BPIXLayer_Flipped     += barycentreLayer[ladder]; }
+                     else { // odd ladder = outer = non-flipped
+                        nmodulesLayer_NonFlipped += nmodules[layer][ladder];
+                        BPIXLayer_NonFlipped     += barycentreLayer[ladder]; }
+                 }
  
+              } // phase-1
+
+              // Phase-0
+              //
+              // Phase 0: Outer ladders are odd for layer 1,3 and even for layer 2
+              if(phase_ == 0) {
+
+                 if(layer == 2){ // layer-2
+
+                    if(ladder%2!=0) { // odd ladder = inner = flipped
+                       nmodulesLayer_Flipped += nmodules[layer][ladder];
+                       BPIXLayer_Flipped     += barycentreLayer[ladder]; }
+                    else{
+                       nmodulesLayer_NonFlipped += nmodules[layer][ladder];
+                       BPIXLayer_NonFlipped     += barycentreLayer[ladder];}
+                 }
+                 else{ // layer-1,3
+
+                     if(ladder%2==0) { // even ladder = inner = flipped
+                        nmodulesLayer_Flipped += nmodules[layer][ladder];
+                        BPIXLayer_Flipped     += barycentreLayer[ladder]; }
+                     else { // odd ladder = outer = non-flipped
+                        nmodulesLayer_NonFlipped += nmodules[layer][ladder];
+                        BPIXLayer_NonFlipped     += barycentreLayer[ladder]; }
+                 }
+
+              } // phase-0
+
          }//loop over ladders
 
+         //BPIX per-layer
          BPIXLayer *= (1.0/nmodulesLayer);                       BPIXLayer += globalTkPosition;
          BPIXLayer_Flipped *= (1.0/nmodulesLayer_Flipped);       BPIXLayer_Flipped += globalTkPosition;
          BPIXLayer_NonFlipped *= (1.0/nmodulesLayer_NonFlipped); BPIXLayer_NonFlipped += globalTkPosition;

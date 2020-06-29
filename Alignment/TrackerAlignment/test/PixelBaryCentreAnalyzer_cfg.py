@@ -9,13 +9,28 @@ process.load('Configuration.StandardSequences.GeometryRecoDB_cff')
 process.load('Configuration.StandardSequences.MagneticField_AutoFromDBCurrent_cff')
 process.load('Configuration.StandardSequences.FrontierConditions_GlobalTag_cff')
 
+import FWCore.ParameterSet.VarParsing as VarParsing
+
+options = VarParsing.VarParsing()
+options.register('lumisPerRun',
+                1,
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "the number of lumis to be processed per-run.")
+options.register('firstRun',
+                1,
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "the first run number be processed")
+
+options.parseArguments()
+
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = 5000                            # do not clog output with IO
+process.MessageLogger.cerr.FwkReport.reportEvery = options.lumisPerRun*100   # do not clog output with I/O
 
-lumisPerRun=5000
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(lumisPerRun*50000) )       # large number of events is needed since we probe 5000LS for run (see below)
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.lumisPerRun*40000) )       # large number of events is needed since we probe 5000LS for run (see below)
 
 ####################################################################
 # Empty source 
@@ -24,10 +39,10 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(lumisPerRun*
 #DCSJson='/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions16/13TeV/DCSOnly/json_DCSONLY.txt'
 
 process.source = cms.Source("EmptySource",
-                            firstRun = cms.untracked.uint32(294929),
+                            firstRun = cms.untracked.uint32(options.firstRun),
                             firstLuminosityBlock = cms.untracked.uint32(1),           # probe one LS after the other
                             numberEventsInLuminosityBlock = cms.untracked.uint32(1),  # probe one event per LS
-                            numberEventsInRun = cms.untracked.uint32(lumisPerRun),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
+                            numberEventsInRun = cms.untracked.uint32(options.lumisPerRun),           # a number of events > the number of LS possible in a real run (5000 s ~ 32 h)
                             )
 
 ####################################################################
