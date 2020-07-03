@@ -1,0 +1,47 @@
+
+
+1. Barycentre ED analyzer (Based on CMSSW_10_6_12)
+
+   read track alignment tags with different labels in ES and dump the barycentre for different substructures into trees
+
+   cmsRun config
+   - PixelBaryCentreAnalyzer_2016_cfg.py for 2016 (Phase-0)
+   - PixelBaryCentreAnalyzer_2017+2018_cfg.py for 2017,2018 (Phase-1)
+
+   hadd the output root file to get full Run-2 Ntuple : PixelBaryCentre_2016_2017_2018.root
+
+2. Plotting script (Need CMSSW env better >= CMSSW_10_6_X)
+
+   Input : PixelBaryCentre_2016_2017_2018.root and FronTier service
+   Plot barycentres of Rereco, EOY and Prompt in one canvas and save
+   Plot barycentre diff between Rereco and Prompt, EOY and Prompt and save in one canvas
+
+   plotBaryCentre_VS_BeamSpot.py -h for help
+
+   Options:
+     -h, --help         show this help message and exit
+     --usePixelQuality  whether use SiPixelQuality                  default False
+     --showLumi         whether use integrated lumi as x-axis       default False
+     --years            years to plot                               default 2016, 2017, 2018
+     --substructures    substrcutures to plot                       default BPIX and PIX
+
+     ROOT options
+     -l
+     -q
+     -b
+
+     For 2016 alone, 
+     python plotBaryCentre_VS_BeamSpot.py --showLumi --years 2016
+     For 2017 alone,
+     python plotBaryCentre_VS_BeamSpot.py --showLumi --years 2017     
+     For 2018 alone,
+     python plotBaryCentre_VS_BeamSpot.py --showLumi --years 2018
+
+     Three years 
+     python plotBaryCentre_VS_BeamSpot.py --showLumi --years 2016 2017 2018
+
+     Only plot BPIX
+     python plotBaryCentre_VS_BeamSpot.py --showLumi --years 2016 2017 2018 --substructure BPIX
+
+    
+
