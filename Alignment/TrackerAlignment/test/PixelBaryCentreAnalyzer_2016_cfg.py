@@ -18,19 +18,26 @@ options.register('lumisPerRun',
                 VarParsing.VarParsing.varType.int,
                 "the number of lumis to be processed per-run.")
 options.register('firstRun',
-                294927,
+                266150,
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.int,
                 "the first run number be processed")
+options.register('lastRun',
+                284044,
+                VarParsing.VarParsing.multiplicity.singleton,
+                VarParsing.VarParsing.varType.int,
+                "the run number to stop")
 
 options.parseArguments()
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.destinations = ['cout', 'cerr']
-process.MessageLogger.cerr.FwkReport.reportEvery = options.lumisPerRun*100   # do not clog output with I/O
+process.MessageLogger.cerr.FwkReport.reportEvery = options.lumisPerRun*1000   # do not clog output with I/O
 
+numberOfRuns = options.lastRun - options.firstRun + 1
+print("number of Runs "+str(numberOfRuns))
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.lumisPerRun*40000) )       # large number of events is needed since we probe 5000LS for run (see below)
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.lumisPerRun*numberOfRuns) ) 
 
 ####################################################################
 # Empty source 
@@ -53,23 +60,32 @@ process.source = cms.Source("EmptySource",
 from Configuration.AlCa.GlobalTag import GlobalTag
 process.GlobalTag = GlobalTag(process.GlobalTag,"auto:run2_data")
 
-process.GlobalTag.toGet.append(
-  cms.PSet(
-    record = cms.string("TrackerAlignmentRcd"),
-    label = cms.untracked.string("prompt"),
-    tag = cms.string("TrackerAlignment_PCL_byRun_v2_express"),
-    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-  )
-)
+tkAligns = {"prompt":"TrackerAlignment_PCL_byRun_v2_express","EOY":"TrackerAlignment_v24_offline","rereco":"TrackerAlignment_v29_offline"}
 
-process.GlobalTag.toGet.append(
-  cms.PSet(
-    record = cms.string("BeamSpotObjectsRcd"),
-    label = cms.untracked.string("prompt"),
-    tag = cms.string("BeamSpotObjects_PCL_byLumi_v0_prompt"),
-    connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
-  )
-)
+for label in tkAligns.keys() :
+
+   process.GlobalTag.toGet.append(
+     cms.PSet(
+       record = cms.string("TrackerAlignmentRcd"),
+       label = cms.untracked.string(label),
+       tag = cms.string(tkAligns[label]),
+       connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+     )
+   )
+
+
+beamSpots = {"prompt":"BeamSpotObjects_PCL_byLumi_v0_prompt","rereco":"BeamSpotObjects_2016_2017_2018UL_SpecialRuns_LumiBased_v1"}
+
+for label in beamSpots.keys() :
+
+    process.GlobalTag.toGet.append(
+      cms.PSet(
+        record = cms.string("BeamSpotObjectsRcd"),
+        label = cms.untracked.string(label),
+        tag = cms.string(beamSpots[label]),
+        connect = cms.string("frontier://FrontierProd/CMS_CONDITIONS")
+      )
+    )
 
 # ...or specify database connection and tag:  
 #from CondCore.CondDB.CondDB_cfi import *
@@ -85,12 +101,25 @@ process.GlobalTag.toGet.append(
 ####################################################################
 # Load and configure analyzer
 ####################################################################
+bcLabels_ = cms.untracked.vstring("")
+bsLabels_ = cms.untracked.vstring("")
+
+for label in tkAligns.keys() :
+    bcLabels_.append(label)
+
+for label in beamSpots.keys() :
+    bsLabels_.append(label)
+
 process.PixelBaryCentreAnalyzer = cms.EDAnalyzer("PixelBaryCentreAnalyzer",
-                    usePixelQuality = cms.untracked.bool(False)
+                    usePixelQuality = cms.untracked.bool(False),
+                    tkAlignLabels = bcLabels_,
+                    beamSpotLabels = bsLabels_
                   )
 
 process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentreAnalyzer",
-                    usePixelQuality = cms.untracked.bool(True)
+                    usePixelQuality = cms.untracked.bool(True),
+                    tkAlignLabels = bcLabels_,
+                    beamSpotLabels = bsLabels_
                   )
 
 
@@ -99,7 +128,7 @@ process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentr
 # Output file
 ####################################################################
 process.TFileService = cms.Service("TFileService",
-                                   fileName=cms.string("PixelBaryCentre_Rereco.root")
+                                   fileName=cms.string("PixelBaryCentre_2016.root")
                                    ) 
 
 # Put module in path:
