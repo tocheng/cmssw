@@ -23,7 +23,7 @@ options.register('firstRun',
                 VarParsing.VarParsing.varType.int,
                 "the first run number be processed")
 options.register('lastRun',
-                325175,
+                307082,
                 VarParsing.VarParsing.multiplicity.singleton,
                 VarParsing.VarParsing.varType.int,
                 "the run number to stop")
@@ -128,7 +128,7 @@ process.PixelBaryCentreAnalyzerWithPixelQuality = cms.EDAnalyzer("PixelBaryCentr
 # Output file
 ####################################################################
 process.TFileService = cms.Service("TFileService",
-                                   fileName=cms.string("PixelBaryCentre_2017_2018.root")
+                                   fileName=cms.string("PixelBaryCentre_2017.root")
                                    ) 
 
 # Put module in path:

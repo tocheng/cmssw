@@ -247,8 +247,6 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
     // loop over bclabels
     for(const auto& label: bcLabels_) {
 
-        std::cout << label << "\n";
-
         // init tree content
         PixelBaryCentreAnalyzer::initBC();
 
@@ -416,8 +414,6 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
      // loop over bsLabels_
      for(const auto& label: bsLabels_) {
-
-        std::cout << label << "\n";
 
         // init bstree content
         PixelBaryCentreAnalyzer::initBS();
