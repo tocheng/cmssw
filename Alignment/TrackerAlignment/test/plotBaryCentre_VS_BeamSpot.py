@@ -56,6 +56,8 @@ def parseOptions():
 
 import ROOT
 #import plotStyle
+ROOT.gStyle.SetLineStyleString(11,"4 4")
+
 import CondCore.Utilities.conddblib as conddb
 
 # 1/lumiScaleFactor to go from 1/pb to 1/fb
@@ -214,28 +216,26 @@ def readBaryCentreAnalyzerTree(t, branch_names, accumulatedLumiPerRun, showLumi)
     return barryCentre
 
 
-def blackLine(start, showLumi):
+def blackBox(x1, y1, x2, y2):
 
-    width = 10
-    if(showLumi) :
-      width = 0.1
-
-    int_max = 10000
-    end = start + width
-    x = array('d',[start,   end,      end,      start])
-    y = array('d',[int_max, int_max,  -int_max, -int_max])
+    x = array('d',[x1, x2, x2, x1, x1])
+    y = array('d',[y1, y1, y2, y2, y1])
     v_x = ROOT.TVectorD(len(x),x)
     v_y = ROOT.TVectorD(len(y),y)
 
     gr = ROOT.TGraph(v_x,v_y)
-    gr.SetNameTitle(str(start),str(start))
-    gr.SetFillColor(ROOT.kBlack)
-    gr.SetFillStyle(3001)
+    gr.SetLineColor(ROOT.kBlack)
 
     return gr
 
 
 def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumulatedLumiPerRun, withPixelQuality, showLumi) :
+
+    substructureTitle=""
+    if(substructure=="PIX") :
+       substructureTitle="Pixel"
+    if(substructure=="BPIX") :
+       substructureTitle="Pixel barrel"
 
     runs = accumulatedLumiPerRun.keys()
     runs.sort()
@@ -283,7 +283,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     width_ = gr_rereco.GetXaxis().GetXmax() - gr_rereco.GetXaxis().GetXmin()
 
     gr_rereco.GetYaxis().SetRangeUser(lower, upper)
-    gr_rereco.GetYaxis().SetTitle("Pixel "+substructure+" barycentre "+coord+" [#mum]")
+    gr_rereco.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") [#mum]")
     gr_rereco.GetXaxis().SetTitle("Run Number")
     gr_rereco.GetYaxis().CenterTitle(True)
     gr_rereco.GetXaxis().CenterTitle(True)
@@ -295,28 +295,37 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_rereco.Draw("AP")
 
     if(showLumi) :
-      gr_rereco.GetXaxis().SetTitle("Integrated luminosity [1/fb]")
+      gr_rereco.GetXaxis().SetTitle("Processed luminosity [1/fb]")
 
     gr_EOY.Draw("P")
     gr_prompt.Draw("P")         
 
-    gr_dummyPixelReco = blackLine(-999, showLumi)
-    gr_dummyPixelReco.Draw("f")
+    gr_dummyFirstRunOfTheYear = blackBox(-999, 10000, -999, -10000)
+    gr_dummyFirstRunOfTheYear.SetLineColor(ROOT.kBlack)
+    gr_dummyFirstRunOfTheYear.SetLineStyle(1)
+    gr_dummyFirstRunOfTheYear.Draw("L")
 
-    gr_rereco.SetTitle("Rereco Pixel "+substructure+" Barycentre (" + coord+")" )
-    gr_EOY.SetTitle("End-of-Year Pixel "+substructure+" Barycentre (" + coord+")" )
-    gr_prompt.SetTitle("Prompt-Reco Pixel "+substructure+" Barycentre (" + coord+")" )
-    gr_dummyPixelReco.SetTitle("Pixel reconstruction template update")
+    gr_dummyPixelReco = blackBox(-999, 10000, -999, -10000)
+    gr_dummyPixelReco.SetLineColor(ROOT.kGray+1)
+    gr_dummyPixelReco.SetLineStyle(11)
+    gr_dummyPixelReco.Draw("L")
 
-    legend = can.BuildLegend()#(0.50, 0.67, 0.88, 0.88)
+    gr_prompt.SetTitle("Alignment during data taking" )
+    gr_EOY.SetTitle("End-of-Year Re-reconstruction" )
+    gr_rereco.SetTitle("Legacy reprocessing" )
+    gr_dummyFirstRunOfTheYear.SetTitle("First run of the year")
+    gr_dummyPixelReco.SetTitle("Pixel calinbration update")
+
+    legend = can.BuildLegend()#0.65, 0.65, 0.85, 0.85)
     legend.SetShadowColor(0)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
     legend.Draw()
-
-    gr_rereco.SetTitle("")
+   
     gr_EOY.SetTitle("")
+    gr_rereco.SetTitle("")
     gr_prompt.SetTitle("")
+    gr_dummyFirstRunOfTheYear.SetTitle("")
     gr_dummyPixelReco.SetTitle("")
 
     # Add legends
@@ -328,69 +337,68 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     years_label = years_label.rstrip("+")
 
     # CMS logo
-    CMSworkInProgress = ROOT.TPaveText( gr_rereco.GetXaxis().GetXmin(), upper+range_*0.005,
-                                        gr_rereco.GetXaxis().GetXmin(), upper+range_*0.055, "nb")
-    CMSworkInProgress.AddText("#scale[1.1]{CMS} #bf{Internal}")
-    CMSworkInProgress.SetTextAlign(12)
+    CMSworkInProgress = ROOT.TPaveText( gr_rereco.GetXaxis().GetXmax()-0.3*width_, upper+range_*0.005,
+                                        gr_rereco.GetXaxis().GetXmax(), upper+range_*0.055, "nb")
+    CMSworkInProgress.AddText("CMS #bf{#it{Preliminary} ("+years_label+" pp collisions)}")
+    CMSworkInProgress.SetTextAlign(32) #right/bottom aligned
     CMSworkInProgress.SetTextSize(0.04)
     CMSworkInProgress.SetFillColor(10)
     CMSworkInProgress.Draw()
 
-    data_ = ROOT.TPaveText( gr_rereco.GetXaxis().GetXmax()-0.05*width_, upper+range_*0.005,
-                            gr_rereco.GetXaxis().GetXmax()-0.05*width_, upper+range_*0.055, "nb")
-    # data
-    data_.AddText(years_label + " pp collisions")
-    data_.SetTextAlign(32)
-    data_.SetTextSize(0.04)
-    data_.SetFillColor(10)
-    data_.Draw()
-
     # vertical lines
     #pixel local reco
-    gr_lines = {}
+    line_pixels = {}
     for since in pixelLocalRecos :
-      if showLumi :
-         run_index = findRunIndex(since,runs) 
-         integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
-         gr_lines[since] = blackLine(integrated_lumi, showLumi)
-      else :
-         gr_lines[since] = blackLine(since, showLumi)
+        if showLumi :
+           run_index = findRunIndex(since,runs) 
+           integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
+           line_pixels[since] = ROOT.TLine(integrated_lumi, lower, integrated_lumi, upper)
 
-      gr_lines[since].Draw("f")
+        else :
+           line_pixels[since] = ROOT.TLine(since, lower, since, upper)
+
+        line_pixels[since].SetLineColor(ROOT.kGray+1)
+        line_pixels[since].SetLineStyle(11)
+        line_pixels[since].Draw()
 
     # years
-    gr_years = {}
+    line_years = {}
+    box_years = {}
     text_years = {}
     if(len(years)>1 or (not showLumi) ) : # indicate begining of the year if more than one year to show or use run number 
       for year in years :
-        if showLumi :
-           #first run of the year 
-           run_index = findRunIndex(runsPerYear[year][0],runs)
-           integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
-           gr_years[year] = blackLine(integrated_lumi, showLumi)
-           text_years[year] = ROOT.TPaveText( integrated_lumi+0.001*width_, upper-range_*0.06,
-                                              integrated_lumi+0.035*width_,  upper-range_*0.03)
-        else :
-           gr_years[year] = blackLine(runsPerYear[year][0], showLumi)
-           text_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.001*width_, upper-range_*0.06,
-                                              runsPerYear[year][0]+0.035*width_,  upper-range_*0.03)
-        gr_years[year].Draw("f")
+          if showLumi :
+             #first run of the year 
+             run_index = findRunIndex(runsPerYear[year][0],runs)
+             integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
+             line_years[year] = ROOT.TLine(integrated_lumi, lower, integrated_lumi, upper)
+             text_years[year] = ROOT.TPaveText( integrated_lumi+0.01*width_, upper-range_*0.05,
+                                              integrated_lumi+0.05*width_,  upper-range_*0.015, "nb")
+             box_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+          else :
+             line_years[year] = ROOT.TLine(runsPerYear[year][0], lower, runsPerYear[year][0], upper)
+             text_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
+                                              runsPerYear[year][0]+0.05*width_,  upper-range_*0.015, "nb")
+             box_years[year] = blackBox(runsPerYear[year][0]+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
 
-        # Add TextBox at the beginning of each year
-        text_years[year].AddText(str(year))
-        text_years[year].SetTextAlign(32)
-        text_years[year].SetTextSize(0.025)
-        text_years[year].SetFillColor(10)
-        text_years[year].Draw()
+          box_years[year].Draw("L")
+          line_years[year].Draw()
+
+          # Add TextBox at the beginning of each year
+          text_years[year].AddText(str(year))
+          text_years[year].SetTextAlign(22)
+          text_years[year].SetTextSize(0.025)
+          text_years[year].SetFillColor(10)
+          text_years[year].Draw()
 
     can.Update()
 
     if(showLumi) :
-       can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_IntegratedLumi.pdf")
-       can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_IntegratedLumi.png")
+      can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_IntegratedLumi.pdf")
+      can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_IntegratedLumi.png")
     else :      
-       can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.pdf")
-       can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.png")
+      can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.pdf")
+      can.SaveAs("baryCentre"+withPixelQuality+"_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.png")
 
     #####################################################################################################################
 
@@ -427,8 +435,8 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     diffmax = max( max(a_diff_rereco), max(a_diff_EOY))
     diffmin = min( min(a_diff_rereco), min(a_diff_EOY))
 
-    diffmax = diffmax + 20
-    diffmin = diffmin - 20
+    diffmax = diffmax + 50
+    diffmin = diffmin - 50
 
     gr_diff_rereco.SetMarkerStyle(8)
     gr_diff_rereco.SetMarkerSize(0)
@@ -438,7 +446,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_diff_EOY.SetLineColor(ROOT.kRed)
 
     gr_diff_rereco.GetYaxis().SetRangeUser(diffmin, diffmax)
-    gr_diff_rereco.GetYaxis().SetTitle("Pixel barycentre "+coord+" diff w.r.t. prompt-reco[#mum]")
+    gr_diff_rereco.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") diff w.r.t. alignment during data taking[#mum]")
     gr_diff_rereco.GetXaxis().SetTitle("Run Number")
     gr_diff_rereco.GetYaxis().CenterTitle(True)
     gr_diff_rereco.GetXaxis().CenterTitle(True)
@@ -450,23 +458,26 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_diff_rereco.Draw("AP")
 
     if(showLumi) :
-      gr_diff_rereco.GetXaxis().SetTitle("Integrated luminosity [1/fb]")
-
+      gr_diff_rereco.GetXaxis().SetTitle("Processed luminosity [1/fb]")
     gr_diff_EOY.Draw("P")
-    gr_dummyPixelReco.Draw("f")
 
-    gr_diff_rereco.SetTitle("Rereco Pixel "+substructure+" Barycentre (" + coord + ")" )
-    gr_diff_EOY.SetTitle("End-of-Year Pixel "+substructure+" Barycentre (" + coord + ")")
-    gr_dummyPixelReco.SetTitle("Pixel reconstruction template update")
+    gr_dummyFirstRunOfTheYear.Draw("L")
+    gr_dummyPixelReco.Draw("L")
 
-    legendDiff = canDiff.BuildLegend()#(0.50, 0.67, 0.88, 0.88)
+    gr_diff_EOY.SetTitle("End-of-Year Re-reconstruction" )
+    gr_diff_rereco.SetTitle("Legacy reprocessing" )
+    gr_dummyFirstRunOfTheYear.SetTitle("First run of the year")
+    gr_dummyPixelReco.SetTitle("Pixel calinbration update")
+
+    legendDiff = canDiff.BuildLegend()#0.65, 0.65, 0.85, 0.85)
     legendDiff.SetShadowColor(0)
     legendDiff.SetFillColor(0)
     legendDiff.SetLineColor(0)
     legendDiff.Draw()
 
-    gr_diff_rereco.SetTitle("")
     gr_diff_EOY.SetTitle("")
+    gr_diff_rereco.SetTitle("")
+    gr_dummyFirstRunOfTheYear.SetTitle("")
     gr_dummyPixelReco.SetTitle("")
 
     #draw horizontal line at zero
@@ -476,19 +487,52 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
 
     # CMS logo
     CMSworkInProgress.Draw()
-    # data
-    data_.Draw()
 
     # vertical lines
     #pixel local reco
+    line_diff_pixels = {}
     for since in pixelLocalRecos :
-        gr_lines[since].Draw("f")
+        if showLumi :
+           run_index = findRunIndex(since,runs)
+           integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
+           line_diff_pixels[since] = ROOT.TLine(integrated_lumi, diffmin, integrated_lumi, diffmax)
+
+        else :
+           line_diff_pixels[since] = ROOT.TLine(since, diffmin, since, diffmax)
+
+        line_diff_pixels[since].SetLineColor(ROOT.kGray+1)
+        line_diff_pixels[since].SetLineStyle(11)
+        line_diff_pixels[since].Draw()
 
     # years
-    if(len(years)>1 or (not showLumi) ) :
+    line_diff_years = {}
+    box_diff_years = {}
+    text_diff_years = {}
+    if(len(years)>1 or (not showLumi) ) : # indicate begining of the year if more than one year to show or use run number
       for year in years :
-          gr_years[year].Draw("f")
-          text_years[year].Draw()
+          if showLumi :
+             #first run of the year
+             run_index = findRunIndex(runsPerYear[year][0],runs)
+             integrated_lumi = accumulatedLumiPerRun[runs[run_index]]
+             line_diff_years[year] = ROOT.TLine(integrated_lumi, diffmin, integrated_lumi, diffmax)
+             text_diff_years[year] = ROOT.TPaveText( integrated_lumi+0.01*width_, upper-range_*0.05,
+                                              integrated_lumi+0.05*width_,  upper-range_*0.015, "nb")
+             box_diff_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+          else :
+             line_diff_years[year] = ROOT.TLine(runsPerYear[year][0], diffmin, runsPerYear[year][0], diffmax)
+             text_diff_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
+                                              runsPerYear[year][0]+0.05*width_,  upper-range_*0.015, "nb")
+             box_diff_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+
+          box_diff_years[year].Draw("L")
+          line_diff_years[year].Draw("same")
+
+          # Add TextBox at the beginning of each year
+          text_diff_years[year].AddText(str(year))
+          text_diff_years[year].SetTextAlign(32)
+          text_diff_years[year].SetTextSize(0.025)
+          text_diff_years[year].SetFillColor(10)
+          text_diff_years[year].Draw()
 
     canDiff.Update()
 
