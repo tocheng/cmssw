@@ -16,7 +16,8 @@
   <use name="Alignment/CommonAlignment"/>
   <use name="CalibTracker/StandaloneTrackerTopology"/>
   <use name="DataFormats/SiPixelDetId"/>
-  <use name="DQM/SiPixelPhase1Common"/>
+  <use name="CommonTools/UtilAlgos"/>
+  <use name="root"/>
   <flags EDM_PLUGIN="1"/>
 </library>
 
