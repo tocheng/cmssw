@@ -81,7 +81,7 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
       void initBC();
       void initBS();
 
-      bool usePixelQuality_; 
+      bool usePixelQuality_;
       const SiPixelQuality* badPixelInfo_ = nullptr;
 
       // labels of TkAlign tags
@@ -102,13 +102,18 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
 
       double PIXx0_, PIXy0_, PIXz0_;
       TVector3 PIX_, BPIX_, FPIX_;
+      TVector3 BPIX_Flipped_, BPIX_NonFlipped_;
+
       TVector3 BPIXLayer_[4];
       TVector3 BPIXLayer_Flipped_[4];
       TVector3 BPIXLayer_NonFlipped_[4];
+      //// number of modules for each BPIX layer : flipped and non-flipped separately
+      //int nmodules_BPIXLayer_Flipped_[4];
+      //int nmodules_BPIXLayer_NonFlipped_[4];
 
-      std::map<int, std::map<int, TVector3>> BPIXLayerLadder_;
+      //std::map<int, std::map<int, TVector3>> BPIXLayerLadder_;
 
-      edm::Service<TFileService> tFileService; 
+      edm::Service<TFileService> tFileService;
       std::map<std::string, TTree *> bcTrees_;
       std::map<std::string, TTree *> bsTrees_;
 
@@ -131,7 +136,7 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
 PixelBaryCentreAnalyzer::PixelBaryCentreAnalyzer(const edm::ParameterSet& iConfig) :
   usePixelQuality_(iConfig.getUntrackedParameter<bool>("usePixelQuality")),
   bcLabels_(iConfig.getUntrackedParameter<std::vector<std::string>>("tkAlignLabels")),
-  bsLabels_(iConfig.getUntrackedParameter<std::vector<std::string>>("beamSpotLabels")) 
+  bsLabels_(iConfig.getUntrackedParameter<std::vector<std::string>>("beamSpotLabels"))
   //bcTrees_(nullptr),
   //bsTrees_(nullptr)
 {
@@ -151,7 +156,7 @@ PixelBaryCentreAnalyzer::PixelBaryCentreAnalyzer(const edm::ParameterSet& iConfi
 
 PixelBaryCentreAnalyzer::~PixelBaryCentreAnalyzer()
 {
- 
+
    // do anything here that needs to be done at desctruction time
    // (e.g. close files, deallocate resources etc.)
 }
@@ -165,9 +170,9 @@ void PixelBaryCentreAnalyzer::initBS(){
 
   double dummy_float = 999999.0;
 
-  BSx0_  = dummy_float;	  
-  BSy0_  = dummy_float;	  
-  BSz0_  = dummy_float;	  
+  BSx0_  = dummy_float;
+  BSy0_  = dummy_float;
+  BSz0_  = dummy_float;
 
   BS_ = TVector3(dummy_float,dummy_float,dummy_float);
 }
@@ -184,10 +189,17 @@ void PixelBaryCentreAnalyzer::initBC(){
   BPIX_ =  TVector3(dummy_float,dummy_float,dummy_float);
   FPIX_ =  TVector3(dummy_float,dummy_float,dummy_float);
 
+  BPIX_Flipped_    =  TVector3(dummy_float,dummy_float,dummy_float);
+  BPIX_NonFlipped_ =  TVector3(dummy_float,dummy_float,dummy_float);
+
   for(unsigned int i = 0; i<4; i++){
-     BPIXLayer_[i] = TVector3(dummy_float,dummy_float,dummy_float);
-     BPIXLayer_Flipped_[i] = TVector3(dummy_float,dummy_float,dummy_float);
-     BPIXLayer_NonFlipped_[i] = TVector3(dummy_float,dummy_float,dummy_float);     
+
+     BPIXLayer_[i]            = TVector3(dummy_float,dummy_float,dummy_float);
+     BPIXLayer_Flipped_[i]    = TVector3(dummy_float,dummy_float,dummy_float);
+     BPIXLayer_NonFlipped_[i] = TVector3(dummy_float,dummy_float,dummy_float);
+
+     //nmodules_BPIXLayer_Flipped_[i] = 0;
+     //nmodules_BPIXLayer_NonFlipped_[i] = 0;
   }
 
 }
@@ -200,7 +212,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
    bool prepareTkAlign = false;
    bool prepareBS = false;
 
-   // ES watcher can noly run once in the same event, 
+   // ES watcher can noly run once in the same event,
    // otherwise it will turn false whatsoever because the condition doesn't change in the second time call.
    if (watcherTkAlign_.check(iSetup)) prepareTkAlign = true;
    if (watcherBS_.check(iSetup)) prepareBS = true;
@@ -228,7 +240,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      else if (tkGeo_->isThere(GeomDetEnumerators::P1PXB) && tkGeo_->isThere(GeomDetEnumerators::P1PXEC))
         phase_ = 1;
 
-     
+
      // pixel quality
      edm::ESHandle<SiPixelQuality> qualityInfo;
      iSetup.get<SiPixelQualityFromDbRcd>().get( qualityInfo );
@@ -239,7 +251,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
      iSetup.get<GlobalPositionRcd>().get(globalAlignments);
      std::unique_ptr<const Alignments> globalPositions = std::make_unique<Alignments>(*globalAlignments);
      const AlignTransform& globalCoordinates = align::DetectorGlobalPosition(*globalPositions, DetId(DetId::Tracker));
-     TVector3 globalTkPosition(globalCoordinates.translation().x(), 
+     TVector3 globalTkPosition(globalCoordinates.translation().x(),
                                globalCoordinates.translation().y(),
                                globalCoordinates.translation().z());
 
@@ -262,8 +274,8 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
         float nmodules_FPIX(0.);
 
         // per-ladder barycentre
-        std::map<int, std::map<int, float>> nmodules;
-        std::map<int, std::map<int, TVector3>> barycentre;
+        std::map<int, std::map<int, float>> nmodules;      // layer-ladder
+        std::map<int, std::map<int, TVector3>> barycentre; // layer-ladder
 
         // loop over tracker module
         for (const auto &ali : tkAlignments) {
@@ -277,9 +289,9 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
             int subid = DetId(detId).subdetId();
             // BPIX
             if (subid == PixelSubdetector::PixelBarrel){
-               nmodules_BPIX += 1; 
+               nmodules_BPIX += 1;
                barycentre_BPIX += ali_translation;
-           
+
                int layer  = tkTopo_->pxbLayer(detId);
                int ladder = tkTopo_->pxbLadder(detId);
                nmodules[layer][ladder] += 1;
@@ -289,14 +301,14 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
             // FPIX
             if (subid == PixelSubdetector::PixelEndcap){
-               nmodules_FPIX += 1; 
+               nmodules_FPIX += 1;
                barycentre_FPIX += ali_translation;
             } // FPIX
 
         }// loop over tracker module
 
         //PIX
-        TVector3 barycentre_PIX = barycentre_BPIX + barycentre_FPIX; 
+        TVector3 barycentre_PIX = barycentre_BPIX + barycentre_FPIX;
         float nmodules_PIX = nmodules_BPIX + nmodules_FPIX;
         PIX_  = (1.0/nmodules_PIX)*barycentre_PIX   + globalTkPosition;
         PIXx0_ = PIX_.X();
@@ -316,6 +328,8 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
           // Phase 1: Outer ladders are odd for layer 4 and even for layer 1,2,3
         //
 
+        int nmodules_BPIX_Flipped = 0; int nmodules_BPIX_NonFlipped = 0;
+
         // loop over layers
         for (unsigned int i=0; i<barycentre.size(); i++){
 
@@ -325,7 +339,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
              int nmodulesLayer_Flipped = 0;
              int nmodulesLayer_NonFlipped = 0;
              TVector3 BPIXLayer(0.0,0.0,0.0);
-             TVector3 BPIXLayer_Flipped(0.0,0.0,0.0);          
+             TVector3 BPIXLayer_Flipped(0.0,0.0,0.0);
              TVector3 BPIXLayer_NonFlipped(0.0,0.0,0.0);
 
              // loop over ladder
@@ -333,11 +347,11 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
              for (std::map<int, TVector3>::iterator it = barycentreLayer.begin(); it != barycentreLayer.end(); ++it) {
 
                  int ladder = it->first;
-                 BPIXLayerLadder_[layer][ladder] = (1.0/nmodules[layer][ladder])*barycentreLayer[ladder] + globalTkPosition;
+                 //BPIXLayerLadder_[layer][ladder] = (1.0/nmodules[layer][ladder])*barycentreLayer[ladder] + globalTkPosition;
 
                  nmodulesLayer += nmodules[layer][ladder];
                  BPIXLayer     += barycentreLayer[ladder];
-              
+
                  // Phase-1
                  //
                  // Phase 1: Outer ladders are odd for layer 4 and even for layer 1,2,3
@@ -345,10 +359,10 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
                     if(layer!=4){ // layer 1-3
 
-                       if(ladder%2!=0) { // odd ladder = inner = flipped 
+                       if(ladder%2!=0) { // odd ladder = inner = flipped
                           nmodulesLayer_Flipped += nmodules[layer][ladder];
-                          BPIXLayer_Flipped     += barycentreLayer[ladder]; }
-                       else{ 
+                          BPIXLayer_Flipped     += barycentreLayer[ladder];}
+                       else{
                           nmodulesLayer_NonFlipped += nmodules[layer][ladder];
                           BPIXLayer_NonFlipped     += barycentreLayer[ladder];}
                     }
@@ -361,7 +375,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
                            nmodulesLayer_NonFlipped += nmodules[layer][ladder];
                            BPIXLayer_NonFlipped     += barycentreLayer[ladder]; }
                     }
- 
+
                  } // phase-1
 
                  // Phase-0
@@ -392,16 +406,28 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
             }//loop over ladders
 
+            // total BPIX flipped/non-flipped
+            BPIX_Flipped_ += BPIXLayer_Flipped;
+            BPIX_NonFlipped_ += BPIXLayer_NonFlipped;
+            nmodules_BPIX_Flipped += nmodulesLayer_Flipped;
+            nmodules_BPIX_NonFlipped += nmodulesLayer_NonFlipped;
+
             //BPIX per-layer
-            BPIXLayer *= (1.0/nmodulesLayer);                       BPIXLayer += globalTkPosition;
-            BPIXLayer_Flipped *= (1.0/nmodulesLayer_Flipped);       BPIXLayer_Flipped += globalTkPosition;
+            BPIXLayer            *= (1.0/nmodulesLayer);            BPIXLayer += globalTkPosition;
+            BPIXLayer_Flipped    *= (1.0/nmodulesLayer_Flipped);    BPIXLayer_Flipped += globalTkPosition;
             BPIXLayer_NonFlipped *= (1.0/nmodulesLayer_NonFlipped); BPIXLayer_NonFlipped += globalTkPosition;
- 
+
             BPIXLayer_[i] = BPIXLayer;
             BPIXLayer_Flipped_[i] = BPIXLayer_Flipped;
             BPIXLayer_NonFlipped_[i] = BPIXLayer_NonFlipped;
+            //nmodules_BPIXLayer_Flipped_[i] = nmodulesLayer_Flipped;
+            //nmodules_BPIXLayer_NonFlipped_[i] = nmodulesLayer_NonFlipped;
 
-        }// loop over layers     
+
+        }// loop over layers
+
+        BPIX_Flipped_    *= (1.0/nmodules_BPIX_Flipped);     BPIX_Flipped_ += globalTkPosition;
+        BPIX_NonFlipped_ *= (1.0/nmodules_BPIX_NonFlipped);  BPIX_NonFlipped_ += globalTkPosition;
 
         bcTrees_[label]->Fill();
 
@@ -422,7 +448,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
         edm::ESHandle< BeamSpotObjects > beamhandle;
         iSetup.get<BeamSpotObjectsRcd>().get(label, beamhandle);
         const BeamSpotObjects *mybeamspot = beamhandle.product();
-      
+
         BSx0_  = mybeamspot->GetX();
         BSy0_  = mybeamspot->GetY();
         BSz0_  = mybeamspot->GetZ();
@@ -439,7 +465,7 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
 
 
 // ------------ method called once each job just before starting event loop  ------------
-void 
+void
 PixelBaryCentreAnalyzer::beginJob()
 {
 
@@ -451,12 +477,12 @@ PixelBaryCentreAnalyzer::beginJob()
      treeName += label;
 
      bsTrees_[label] = tFileService->make<TTree>(TString(treeName),"PixelBarycentre analyzer ntuple");
-  
+
      bsTrees_[label]->Branch("run",&run_,"run/I");
      bsTrees_[label]->Branch("ls",&ls_,"ls/I");
      bsTrees_[label]->Branch("BSx0",&BSx0_,"BSx0/D");
-     bsTrees_[label]->Branch("BSy0",&BSy0_,"BSy0/D");	   
-     bsTrees_[label]->Branch("BSz0",&BSz0_,"BSz0/D");	   
+     bsTrees_[label]->Branch("BSy0",&BSy0_,"BSy0/D");
+     bsTrees_[label]->Branch("BSz0",&BSz0_,"BSz0/D");
 
      bsTrees_[label]->Branch("BS",&BS_);
 
@@ -477,6 +503,8 @@ PixelBaryCentreAnalyzer::beginJob()
 
      bcTrees_[label]->Branch("PIX",&PIX_);
      bcTrees_[label]->Branch("BPIX",&BPIX_);
+     bcTrees_[label]->Branch("BPIX_Flipped",&BPIX_Flipped_);
+     bcTrees_[label]->Branch("BPIX_NonFlipped",&BPIX_NonFlipped_);
      bcTrees_[label]->Branch("FPIX",&FPIX_);
 
      //per-layer
@@ -489,6 +517,8 @@ PixelBaryCentreAnalyzer::beginJob()
         bcTrees_[label]->Branch(structure,&BPIXLayer_[i]);
         bcTrees_[label]->Branch(structure+"_Flipped",&BPIXLayer_Flipped_[i]);
         bcTrees_[label]->Branch(structure+"_NonFlipped",&BPIXLayer_NonFlipped_[i]);
+        //bcTrees_[label]->Branch(structure+"_nmodules",&BPIXLayer_nmodules_[i]);
+
      }
 
 
@@ -497,8 +527,8 @@ PixelBaryCentreAnalyzer::beginJob()
 }
 
 // ------------ method called once each job just after ending the event loop  ------------
-void 
-PixelBaryCentreAnalyzer::endJob() 
+void
+PixelBaryCentreAnalyzer::endJob()
 {
 
    bcLabels_.clear();
