@@ -4,9 +4,14 @@ import sys, os
 
 from array import array
 import optparse
-import argparse
+#import argparse
 
 from collections import OrderedDict
+
+import ROOT
+import plotStyle
+
+import CondCore.Utilities.conddblib as conddb
 
 grootargs = []
 def callback_rootargs(option, opt, value, parser):
@@ -53,12 +58,6 @@ def parseOptions():
 
     return parser
 
-
-import ROOT
-#import plotStyle
-ROOT.gStyle.SetLineStyleString(11,"4 4")
-
-import CondCore.Utilities.conddblib as conddb
 
 # 1/lumiScaleFactor to go from 1/pb to 1/fb
 lumiScaleFactor = 1000
@@ -307,7 +306,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
 
     gr_dummyPixelReco = blackBox(-999, 10000, -999, -10000)
     gr_dummyPixelReco.SetLineColor(ROOT.kGray+1)
-    gr_dummyPixelReco.SetLineStyle(11)
+    gr_dummyPixelReco.SetLineStyle(4)
     gr_dummyPixelReco.Draw("L")
 
     gr_prompt.SetTitle("Alignment during data taking" )
@@ -357,7 +356,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
            line_pixels[since] = ROOT.TLine(since, lower, since, upper)
 
         line_pixels[since].SetLineColor(ROOT.kGray+1)
-        line_pixels[since].SetLineStyle(11)
+        line_pixels[since].SetLineStyle(4)
         line_pixels[since].Draw()
 
     # years
@@ -378,7 +377,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
              line_years[year] = ROOT.TLine(runsPerYear[year][0], lower, runsPerYear[year][0], upper)
              text_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
                                               runsPerYear[year][0]+0.05*width_,  upper-range_*0.015, "nb")
-             box_years[year] = blackBox(runsPerYear[year][0]+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+             box_years[year] = blackBox(runsPerYear[year][0]+0.01*width_, upper-range_*0.015, runsPerYear[year][0]+0.05*width_, upper-range_*0.05)
 
           box_years[year].Draw("L")
           line_years[year].Draw()
@@ -500,7 +499,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
            line_diff_pixels[since] = ROOT.TLine(since, diffmin, since, diffmax)
 
         line_diff_pixels[since].SetLineColor(ROOT.kGray+1)
-        line_diff_pixels[since].SetLineStyle(11)
+        line_diff_pixels[since].SetLineStyle(4)
         line_diff_pixels[since].Draw()
 
     # years
@@ -521,7 +520,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
              line_diff_years[year] = ROOT.TLine(runsPerYear[year][0], diffmin, runsPerYear[year][0], diffmax)
              text_diff_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
                                               runsPerYear[year][0]+0.05*width_,  upper-range_*0.015, "nb")
-             box_diff_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+             box_diff_years[year] = blackBox(runsPerYear[year][0]+0.01*width_, upper-range_*0.015, runsPerYear[year][0]+0.05*width_, upper-range_*0.05)
 
           box_diff_years[year].Draw("L")
           line_diff_years[year].Draw("same")
@@ -542,7 +541,6 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     else :
        canDiff.SaveAs("baryCentreDiff_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.pdf")
        canDiff.SaveAs("baryCentreDiff_"+coord+"_"+substructure+"_"+years_label+"_RunNumber.png")
-
 
 # main call
 def Run():
@@ -620,6 +618,7 @@ def Run():
     pixelLocalRecos = sorted([int(item[0]) for item in iovs])
     print("Pixel template updates:")
     print(pixelLocalRecos)
+
     '''
 [1, 186500, 195360, 197749, 200961, 203368, 204601, 206446, 238341, 246866, 253914, 255655, 271866, 276315, 278271, 280928, 290543, 297281, 298653, 299443, 300389, 301046, 302131, 303790, 303998, 304911, 313041, 314881, 316758, 317475, 317485, 317527, 317661, 317664, 318227, 320377, 321831, 322510, 322603, 323232, 324245]
     ''' 
@@ -647,7 +646,6 @@ def Run():
         for coord in ['x','y','z'] :
 
             plotbarycenter(bc, coord,substructure, runsPerYear,pixelLocalRecos,accumulatedLumiPerRun,withPixelQuality,showLumi)
-
 
 
 if __name__ == "__main__":
