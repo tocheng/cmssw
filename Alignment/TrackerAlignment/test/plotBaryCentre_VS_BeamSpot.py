@@ -242,7 +242,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     years = runsPerYear.keys()
     years.sort()
 
-    can = ROOT.TCanvas("barycentre_"+substructure+"_"+coord, "", 2000, 800)
+    can = ROOT.TCanvas("barycentre_"+substructure+"_"+coord, "", 2000, 900)
     can.cd()
 
     bc_rereco = bc["rereco"]
@@ -280,25 +280,25 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
       lower = lower * scale
 
     range_ = upper - lower
-    width_ = gr_rereco.GetXaxis().GetXmax() - gr_rereco.GetXaxis().GetXmin()
+    width_ = gr_prompt.GetXaxis().GetXmax() - gr_prompt.GetXaxis().GetXmin()
 
-    gr_rereco.GetYaxis().SetRangeUser(lower, upper)
-    gr_rereco.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") [#mum]")
-    gr_rereco.GetXaxis().SetTitle("Run Number")
-    gr_rereco.GetYaxis().CenterTitle(True)
-    gr_rereco.GetXaxis().CenterTitle(True)
-    gr_rereco.GetYaxis().SetTitleOffset(0.80)
-    gr_rereco.GetYaxis().SetTitleSize(0.045)
-    gr_rereco.GetXaxis().SetTitleOffset(0.90)
-    gr_rereco.GetXaxis().SetTitleSize(0.045)
-    gr_rereco.GetXaxis().SetMaxDigits(6)
-    gr_rereco.Draw("AP")
+    gr_prompt.GetYaxis().SetRangeUser(lower, upper)
+    gr_prompt.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") [#mum]")
+    gr_prompt.GetXaxis().SetTitle("Run Number")
+    gr_prompt.GetYaxis().CenterTitle(True)
+    gr_prompt.GetXaxis().CenterTitle(True)
+    gr_prompt.GetYaxis().SetTitleOffset(0.80)
+    gr_prompt.GetYaxis().SetTitleSize(0.055)
+    gr_prompt.GetXaxis().SetTitleOffset(0.80)
+    gr_prompt.GetXaxis().SetTitleSize(0.055)
+    gr_prompt.GetXaxis().SetMaxDigits(6)
+    gr_prompt.Draw("AP")
 
     if(showLumi) :
-      gr_rereco.GetXaxis().SetTitle("Processed luminosity [1/fb]")
+      gr_prompt.GetXaxis().SetTitle("Processed luminosity [1/fb]")
 
     gr_EOY.Draw("P")
-    gr_prompt.Draw("P")         
+    gr_rereco.Draw("P")         
 
     gr_dummyFirstRunOfTheYear = blackBox(-999, 10000, -999, -10000)
     gr_dummyFirstRunOfTheYear.SetLineColor(ROOT.kBlack)
@@ -314,13 +314,12 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_EOY.SetTitle("End-of-Year Re-reconstruction" )
     gr_rereco.SetTitle("Legacy reprocessing" )
     gr_dummyFirstRunOfTheYear.SetTitle("First run of the year")
-    gr_dummyPixelReco.SetTitle("Pixel calinbration update")
+    gr_dummyPixelReco.SetTitle("Pixel calibration update")
 
     legend = can.BuildLegend()#0.65, 0.65, 0.85, 0.85)
     legend.SetShadowColor(0)
     legend.SetFillColor(0)
     legend.SetLineColor(0)
-    legend.Draw()
    
     gr_EOY.SetTitle("")
     gr_rereco.SetTitle("")
@@ -391,6 +390,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
           text_years[year].SetFillColor(10)
           text_years[year].Draw()
 
+    legend.Draw()
     can.Update()
 
     if(showLumi) :
@@ -403,7 +403,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     #####################################################################################################################
 
     # plot diff EOY - prompt and Rereco - prompt
-    canDiff = ROOT.TCanvas("barycentreDiff_"+substructure+"_"+coord, "", 2000, 800)
+    canDiff = ROOT.TCanvas("barycentreDiff_"+substructure+"_"+coord, "", 2000, 900)
     canDiff.cd()
 
     xmin = gr_rereco.GetXaxis().GetXmin()
@@ -445,21 +445,21 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_diff_EOY.SetMarkerSize(0)
     gr_diff_EOY.SetLineColor(ROOT.kRed)
 
-    gr_diff_rereco.GetYaxis().SetRangeUser(diffmin, diffmax)
-    gr_diff_rereco.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") diff w.r.t. alignment during data taking[#mum]")
-    gr_diff_rereco.GetXaxis().SetTitle("Run Number")
-    gr_diff_rereco.GetYaxis().CenterTitle(True)
-    gr_diff_rereco.GetXaxis().CenterTitle(True)
-    gr_diff_rereco.GetYaxis().SetTitleOffset(0.80)
-    gr_diff_rereco.GetYaxis().SetTitleSize(0.045)
-    gr_diff_rereco.GetXaxis().SetTitleOffset(0.90)
-    gr_diff_rereco.GetXaxis().SetTitleSize(0.045)
-    gr_diff_rereco.GetXaxis().SetMaxDigits(6)
-    gr_diff_rereco.Draw("AP")
+    gr_diff_EOY.GetYaxis().SetRangeUser(diffmin, diffmax)
+    gr_diff_EOY.GetYaxis().SetTitle(substructureTitle+" barycentre ("+coord+") diff w.r.t. alignment during data taking[#mum]")
+    gr_diff_EOY.GetXaxis().SetTitle("Run Number")
+    gr_diff_EOY.GetYaxis().CenterTitle(True)
+    gr_diff_EOY.GetXaxis().CenterTitle(True)
+    gr_diff_EOY.GetYaxis().SetTitleOffset(0.80)
+    gr_diff_EOY.GetYaxis().SetTitleSize(0.055)
+    gr_diff_EOY.GetXaxis().SetTitleOffset(0.80)
+    gr_diff_EOY.GetXaxis().SetTitleSize(0.055)
+    gr_diff_EOY.GetXaxis().SetMaxDigits(6)
+    gr_diff_EOY.Draw("AP")
 
     if(showLumi) :
-      gr_diff_rereco.GetXaxis().SetTitle("Processed luminosity [1/fb]")
-    gr_diff_EOY.Draw("P")
+      gr_diff_EOY.GetXaxis().SetTitle("Processed luminosity [1/fb]")
+    gr_diff_rereco.Draw("P")
 
     gr_dummyFirstRunOfTheYear.Draw("L")
     gr_dummyPixelReco.Draw("L")
@@ -473,7 +473,6 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     legendDiff.SetShadowColor(0)
     legendDiff.SetFillColor(0)
     legendDiff.SetLineColor(0)
-    legendDiff.Draw()
 
     gr_diff_EOY.SetTitle("")
     gr_diff_rereco.SetTitle("")
@@ -534,6 +533,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
           text_diff_years[year].SetFillColor(10)
           text_diff_years[year].Draw()
 
+    legendDiff.Draw()
     canDiff.Update()
 
     if(showLumi) :
