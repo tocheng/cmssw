@@ -102,11 +102,13 @@ class PixelBaryCentreAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedReso
 
       double PIXx0_, PIXy0_, PIXz0_;
       TVector3 PIX_, BPIX_, FPIX_;
-      TVector3 BPIX_Flipped_, BPIX_NonFlipped_;
+      TVector3 BPIX_Flipped_, BPIX_NonFlipped_, BPIX_DiffFlippedNonFlipped_;
+
 
       TVector3 BPIXLayer_[4];
       TVector3 BPIXLayer_Flipped_[4];
       TVector3 BPIXLayer_NonFlipped_[4];
+      TVector3 BPIXLayer_DiffFlippedNonFlipped_[4];
       //// number of modules for each BPIX layer : flipped and non-flipped separately
       //int nmodules_BPIXLayer_Flipped_[4];
       //int nmodules_BPIXLayer_NonFlipped_[4];
@@ -179,6 +181,7 @@ void PixelBaryCentreAnalyzer::initBS(){
 
 void PixelBaryCentreAnalyzer::initBC(){
 
+  // init to large number (unreasonable number) not zero
   double dummy_float = 999999.0;
 
   PIXx0_ = dummy_float;
@@ -191,15 +194,15 @@ void PixelBaryCentreAnalyzer::initBC(){
 
   BPIX_Flipped_    =  TVector3(dummy_float,dummy_float,dummy_float);
   BPIX_NonFlipped_ =  TVector3(dummy_float,dummy_float,dummy_float);
+  BPIX_DiffFlippedNonFlipped_ =  TVector3(dummy_float,dummy_float,dummy_float);
 
   for(unsigned int i = 0; i<4; i++){
 
      BPIXLayer_[i]            = TVector3(dummy_float,dummy_float,dummy_float);
      BPIXLayer_Flipped_[i]    = TVector3(dummy_float,dummy_float,dummy_float);
      BPIXLayer_NonFlipped_[i] = TVector3(dummy_float,dummy_float,dummy_float);
+     BPIXLayer_DiffFlippedNonFlipped_[i] = TVector3(dummy_float,dummy_float,dummy_float);
 
-     //nmodules_BPIXLayer_Flipped_[i] = 0;
-     //nmodules_BPIXLayer_NonFlipped_[i] = 0;
   }
 
 }
@@ -329,6 +332,8 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
         //
 
         int nmodules_BPIX_Flipped = 0; int nmodules_BPIX_NonFlipped = 0;
+        TVector3 BPIX_Flipped(0.0,0.0,0.0);
+        TVector3 BPIX_NonFlipped(0.0,0.0,0.0);
 
         // loop over layers
         for (unsigned int i=0; i<barycentre.size(); i++){
@@ -407,8 +412,8 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
             }//loop over ladders
 
             // total BPIX flipped/non-flipped
-            BPIX_Flipped_ += BPIXLayer_Flipped;
-            BPIX_NonFlipped_ += BPIXLayer_NonFlipped;
+            BPIX_Flipped += BPIXLayer_Flipped;
+            BPIX_NonFlipped += BPIXLayer_NonFlipped;
             nmodules_BPIX_Flipped += nmodulesLayer_Flipped;
             nmodules_BPIX_NonFlipped += nmodulesLayer_NonFlipped;
 
@@ -417,17 +422,21 @@ void PixelBaryCentreAnalyzer::analyze(const edm::Event& iEvent, const edm::Event
             BPIXLayer_Flipped    *= (1.0/nmodulesLayer_Flipped);    BPIXLayer_Flipped += globalTkPosition;
             BPIXLayer_NonFlipped *= (1.0/nmodulesLayer_NonFlipped); BPIXLayer_NonFlipped += globalTkPosition;
 
-            BPIXLayer_[i] = BPIXLayer;
-            BPIXLayer_Flipped_[i] = BPIXLayer_Flipped;
+            BPIXLayer_[i]            = BPIXLayer;
+            BPIXLayer_Flipped_[i]    = BPIXLayer_Flipped;
             BPIXLayer_NonFlipped_[i] = BPIXLayer_NonFlipped;
-            //nmodules_BPIXLayer_Flipped_[i] = nmodulesLayer_Flipped;
-            //nmodules_BPIXLayer_NonFlipped_[i] = nmodulesLayer_NonFlipped;
 
+            BPIXLayer_DiffFlippedNonFlipped_[i] = BPIXLayer_Flipped - BPIXLayer_NonFlipped;
 
         }// loop over layers
 
-        BPIX_Flipped_    *= (1.0/nmodules_BPIX_Flipped);     BPIX_Flipped_ += globalTkPosition;
-        BPIX_NonFlipped_ *= (1.0/nmodules_BPIX_NonFlipped);  BPIX_NonFlipped_ += globalTkPosition;
+        BPIX_Flipped    *= (1.0/nmodules_BPIX_Flipped);     BPIX_Flipped += globalTkPosition;
+        BPIX_NonFlipped *= (1.0/nmodules_BPIX_NonFlipped);  BPIX_NonFlipped += globalTkPosition;
+
+        BPIX_Flipped_    = BPIX_Flipped;
+        BPIX_NonFlipped_ = BPIX_NonFlipped;
+
+        BPIX_DiffFlippedNonFlipped_ = BPIX_Flipped - BPIX_NonFlipped;
 
         bcTrees_[label]->Fill();
 
@@ -505,19 +514,20 @@ PixelBaryCentreAnalyzer::beginJob()
      bcTrees_[label]->Branch("BPIX",&BPIX_);
      bcTrees_[label]->Branch("BPIX_Flipped",&BPIX_Flipped_);
      bcTrees_[label]->Branch("BPIX_NonFlipped",&BPIX_NonFlipped_);
+     bcTrees_[label]->Branch("BPIX_DiffFlippedNonFlipped",&BPIX_DiffFlippedNonFlipped_);
      bcTrees_[label]->Branch("FPIX",&FPIX_);
 
      //per-layer
      for(unsigned int i = 0; i<4; i++){
 
-        int layer = i+1;
         TString structure="BPIXLYR";
+        int layer = i+1;
         structure+=layer;
 
         bcTrees_[label]->Branch(structure,&BPIXLayer_[i]);
         bcTrees_[label]->Branch(structure+"_Flipped",&BPIXLayer_Flipped_[i]);
         bcTrees_[label]->Branch(structure+"_NonFlipped",&BPIXLayer_NonFlipped_[i]);
-        //bcTrees_[label]->Branch(structure+"_nmodules",&BPIXLayer_nmodules_[i]);
+        bcTrees_[label]->Branch(structure+"_DiffFlippedNonFlipped",&BPIXLayer_DiffFlippedNonFlipped_[i]);
 
      }
 

@@ -85,7 +85,7 @@ def findRunIndex(run, runs) :
           return ROOT.TAxis(len(runs)-1,array('d',runs)).FindBin(run) - 1
 
 
-def readBaryCentreAnalyzerTree(t, branch_names, accumulatedLumiPerRun, showLumi) :
+def readBaryCentreAnalyzerTree(t, branch_names, accumulatedLumiPerRun, showLumi, isEOY) :
 
     # to store lumi sections info for each run
     run_maxlumi = {}
@@ -134,6 +134,9 @@ def readBaryCentreAnalyzerTree(t, branch_names, accumulatedLumiPerRun, showLumi)
     for iov in t :
         # skip runs out-of-range
         if(iov.run>runs[len(runs)-1] or iov.run<runs[0]):
+          continue
+        # exclude 2018D for EOY rereco
+        if(isEOY and iov.run>=320413):
           continue
 
         # if x-axis is luminosity
@@ -265,7 +268,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     upper = max(bc_rereco[coord+"max_"+substructure], bc_EOY[coord+"max_"+substructure], bc_prompt[coord+"max_"+substructure])
     lower = min(bc_rereco[coord+"min_"+substructure], bc_EOY[coord+"min_"+substructure], bc_prompt[coord+"min_"+substructure])
 
-    scale = 1.3
+    scale = 1.1
 
     if(upper>0) :
       upper = upper * scale
@@ -294,7 +297,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_prompt.Draw("AP")
 
     if(showLumi) :
-      gr_prompt.GetXaxis().SetTitle("Processed luminosity [1/fb]")
+      gr_prompt.GetXaxis().SetTitle("Delivered luminosity [1/fb]")
 
     gr_EOY.Draw("P")
     gr_rereco.Draw("P")         
@@ -306,7 +309,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
 
     gr_dummyPixelReco = blackBox(-999, 10000, -999, -10000)
     gr_dummyPixelReco.SetLineColor(ROOT.kGray+1)
-    gr_dummyPixelReco.SetLineStyle(4)
+    gr_dummyPixelReco.SetLineStyle(3)
     gr_dummyPixelReco.Draw("L")
 
     gr_prompt.SetTitle("Alignment during data taking" )
@@ -315,10 +318,10 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_dummyFirstRunOfTheYear.SetTitle("First run of the year")
     gr_dummyPixelReco.SetTitle("Pixel calibration update")
 
-    legend = can.BuildLegend()#0.65, 0.65, 0.85, 0.85)
-    legend.SetShadowColor(0)
-    legend.SetFillColor(0)
-    legend.SetLineColor(0)
+    #legend = can.BuildLegend()#0.65, 0.65, 0.85, 0.85)
+    #legend.SetShadowColor(0)
+    #legend.SetFillColor(0)
+    #legend.SetLineColor(0)
    
     gr_EOY.SetTitle("")
     gr_rereco.SetTitle("")
@@ -356,7 +359,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
            line_pixels[since] = ROOT.TLine(since, lower, since, upper)
 
         line_pixels[since].SetLineColor(ROOT.kGray+1)
-        line_pixels[since].SetLineStyle(4)
+        line_pixels[since].SetLineStyle(3)
         line_pixels[since].Draw()
 
     # years
@@ -372,7 +375,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
              line_years[year] = ROOT.TLine(integrated_lumi, lower, integrated_lumi, upper)
              text_years[year] = ROOT.TPaveText( integrated_lumi+0.01*width_, upper-range_*0.05,
                                               integrated_lumi+0.05*width_,  upper-range_*0.015, "nb")
-             box_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+             box_years[year] = blackBox(integrated_lumi+0.005*width_, upper-range_*0.01, integrated_lumi+0.055*width_, upper-range_*0.055)
           else :
              line_years[year] = ROOT.TLine(runsPerYear[year][0], lower, runsPerYear[year][0], upper)
              text_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
@@ -389,7 +392,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
           text_years[year].SetFillColor(10)
           text_years[year].Draw()
 
-    legend.Draw()
+    #legend.Draw()
     can.Update()
 
     if(showLumi) :
@@ -437,6 +440,9 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     diffmax = diffmax + 50
     diffmin = diffmin - 50
 
+    upper = diffmax
+    range_ = diffmax - diffmin
+
     gr_diff_rereco.SetMarkerStyle(8)
     gr_diff_rereco.SetMarkerSize(0)
     gr_diff_rereco.SetLineColor(ROOT.kGreen+3)
@@ -457,7 +463,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_diff_EOY.Draw("AP")
 
     if(showLumi) :
-      gr_diff_EOY.GetXaxis().SetTitle("Processed luminosity [1/fb]")
+      gr_diff_EOY.GetXaxis().SetTitle("Delivered luminosity [1/fb]")
     gr_diff_rereco.Draw("P")
 
     gr_dummyFirstRunOfTheYear.Draw("L")
@@ -468,10 +474,10 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
     gr_dummyFirstRunOfTheYear.SetTitle("First run of the year")
     gr_dummyPixelReco.SetTitle("Pixel calinbration update")
 
-    legendDiff = canDiff.BuildLegend()#0.65, 0.65, 0.85, 0.85)
-    legendDiff.SetShadowColor(0)
-    legendDiff.SetFillColor(0)
-    legendDiff.SetLineColor(0)
+    #legendDiff = canDiff.BuildLegend()#0.65, 0.65, 0.85, 0.85)
+    #legendDiff.SetShadowColor(0)
+    #legendDiff.SetFillColor(0)
+    #legendDiff.SetLineColor(0)
 
     gr_diff_EOY.SetTitle("")
     gr_diff_rereco.SetTitle("")
@@ -499,7 +505,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
            line_diff_pixels[since] = ROOT.TLine(since, diffmin, since, diffmax)
 
         line_diff_pixels[since].SetLineColor(ROOT.kGray+1)
-        line_diff_pixels[since].SetLineStyle(4)
+        line_diff_pixels[since].SetLineStyle(3)
         line_diff_pixels[since].Draw()
 
     # years
@@ -515,7 +521,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
              line_diff_years[year] = ROOT.TLine(integrated_lumi, diffmin, integrated_lumi, diffmax)
              text_diff_years[year] = ROOT.TPaveText( integrated_lumi+0.01*width_, upper-range_*0.05,
                                               integrated_lumi+0.05*width_,  upper-range_*0.015, "nb")
-             box_diff_years[year] = blackBox(integrated_lumi+0.01*width_, upper-range_*0.015, integrated_lumi+0.05*width_, upper-range_*0.05)
+             box_diff_years[year] = blackBox(integrated_lumi+0.005*width_, upper-range_*0.01, integrated_lumi+0.055*width_, upper-range_*0.055)
           else :
              line_diff_years[year] = ROOT.TLine(runsPerYear[year][0], diffmin, runsPerYear[year][0], diffmax)
              text_diff_years[year] = ROOT.TPaveText( runsPerYear[year][0]+0.01*width_, upper-range_*0.05,
@@ -532,7 +538,7 @@ def plotbarycenter(bc, coord,substructure, runsPerYear, pixelLocalRecos, accumul
           text_diff_years[year].SetFillColor(10)
           text_diff_years[year].Draw()
 
-    legendDiff.Draw()
+    #legendDiff.Draw()
     canDiff.Update()
 
     if(showLumi) :
@@ -637,9 +643,11 @@ def Run():
     substructures=options.substructures
 
     bc = {}
-    bc["rereco"] = readBaryCentreAnalyzerTree(t_rereco, substructures, accumulatedLumiPerRun, showLumi)
-    bc["prompt"] = readBaryCentreAnalyzerTree(t_prompt, substructures, accumulatedLumiPerRun, showLumi)
-    bc["EOY"] = readBaryCentreAnalyzerTree(t_EOY, substructures, accumulatedLumiPerRun, showLumi)
+    isEOY = False
+    bc["rereco"] = readBaryCentreAnalyzerTree(t_rereco, substructures, accumulatedLumiPerRun, showLumi, isEOY)
+    bc["prompt"] = readBaryCentreAnalyzerTree(t_prompt, substructures, accumulatedLumiPerRun, showLumi, isEOY)
+    isEOY = True
+    bc["EOY"] = readBaryCentreAnalyzerTree(t_EOY, substructures, accumulatedLumiPerRun, showLumi, isEOY)
 
     for substructure in substructures :
 
